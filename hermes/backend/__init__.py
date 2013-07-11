@@ -3,42 +3,39 @@
 '''
 
 
-import os
+import collections
 
 
-class Abstract(object):
-  '''Abstract backend'''
-  
-  
-  def clean(self, mode):
-    raise NotImplementedError()
-  
-  def _get(self, keys):
-    raise NotImplementedError()
-  
-  def get(self, key, tags = None):
-    if tags:
-      tagHash = self._get(str(set(tags)))
-      if tagHash:
-        key += ':' + tagHash
-      else:
-        return None
-      
-    return self._get(key, None)
-  
-  def _set(self, key, value):
-    raise NotImplementedError()
-  
-  def set(self, key, value, ttl = None, tags = None):
-    expire = ttl or self.ttl
+class AbstractLock(object):
+  '''Abstract lock.'''
     
-    if tags:
-      tagKey  = str(set(tags))
-      tagHash = self._get(tagKey, None)
-      if not tagHash:
-        tagHash = os.urandom(8).encode('hex')
-        self.set(tagKey, tagHash, expire)
-        
-      key += ':' + tagHash
-      
-    self._set(key, value)
+  def acquire(self, key = None, wait = True):
+    raise NotImplementedError()
+
+  def release(self, key = None):
+    raise NotImplementedError()
+    
+    
+class AbstractBackend(object):
+  '''Abstract backend.'''
+
+  lock = None
+  '''Object that provides ``acquire`` and ``release`` functionality. 
+  Backend implementation may not the locking object.'''
+  
+
+  @staticmethod
+  def _isScalar(value):
+    return not isinstance(value, (collections.Iterable)) or isinstance(value, basestring)
+
+  def save(self, key, value, map = None, ttl = None):
+    raise NotImplementedError()
+  
+  def load(self, keys):
+    raise NotImplementedError()
+  
+  def remove(self, keys):
+    raise NotImplementedError()
+  
+  def clean(self):
+    raise NotImplementedError()

@@ -3,44 +3,56 @@
 '''
 
 
-import os
+import threading
+
+from . import AbstractBackend, AbstractLock
 
 
-class Dictionary(object):
-  '''Test purpose backend implementation'''
+class Lock(AbstractLock):
+  '''Key-unaware thread lock.'''
   
+  _lock = None
   
-  expire = None
-  data   = None
-  
-  
-  def __init__(self, expire):
-    self.expire = expire
-    self.data   = {}
-  
-  def reset(self):
-    self.data.clear()
-  
-  def get(self, key, tags = None):
-    if tags:
-      tagHash = self.get(str(set(tags)))
-      if tagHash:
-        key += ':' + tagHash
-      else:
-        return None
-    return self.data.get(key, None)
-  
-  def set(self, key, value, expire = None, tags = None):
-    expire = expire or self.expire # ignore in proof of concept
     
-    if tags:
-      tagKey  = str(set(tags))
-      tagHash = self.get(tagKey, None)
-      if not tagHash:
-        tagHash = os.urandom(8).encode('hex')
-        self.set(tagKey, tagHash, expire)
-        
-      key += ':' + tagHash
-      
-    self.data[key] = value
+  def __init__(self):
+    self._lock = threading.Lock()
 
+  def acquire(self, key = None, wait = True):
+    return self._lock.acquire(wait)
+
+  def release(self, key = None):
+    self._lock.release()
+    
+
+class Dictionary(AbstractBackend):
+  '''Test purpose backend implementation. Does not implement entry expiry.'''
+  
+  
+  cache = None
+  '''A dict intance.'''
+  
+  
+  def __init__(self):
+    self.lock  = Lock()
+    self.cache = {}
+  
+  def save(self, key, value, map = None, ttl = None):
+    if not map:
+      self.cache[key] = value
+    else:
+      self.update(map)
+  
+  def load(self, keys):
+    if self._isScalar(keys):
+      return self.cache.get(keys, None)
+    else:
+      return {k : self.cache[k] for k in keys if k in self.cache}
+  
+  def remove(self, keys):
+    if self._isScalar(keys):
+      keys = (keys,)
+      
+    map(lambda key: self.cache.pop(key, None), keys)
+
+  def clean(self):
+    self.data.clear()
