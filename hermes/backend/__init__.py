@@ -28,7 +28,7 @@ class AbstractBackend(object):
   def _isScalar(value):
     return not isinstance(value, (collections.Iterable)) or isinstance(value, basestring)
 
-  def save(self, key, value, map = None, ttl = None):
+  def save(self, key = None, value = None, map = None, ttl = None):
     raise NotImplementedError()
   
   def load(self, keys):

@@ -24,23 +24,23 @@ class Lock(AbstractLock):
     self._lock.release()
     
 
-class Dictionary(AbstractBackend):
-  '''Test purpose backend implementation. Does not implement entry expiry.'''
+class Dict(AbstractBackend):
+  '''Test purpose backend implementation. Does not implement entry expiry'''
   
   
   cache = None
-  '''A dict intance.'''
+  '''A dict intance'''
   
   
   def __init__(self):
     self.lock  = Lock()
     self.cache = {}
   
-  def save(self, key, value, map = None, ttl = None):
+  def save(self, key = None, value = None, map = None, ttl = None):
     if not map:
       self.cache[key] = value
     else:
-      self.update(map)
+      self.cache.update(map)
   
   def load(self, keys):
     if self._isScalar(keys):
@@ -55,4 +55,4 @@ class Dictionary(AbstractBackend):
     map(lambda key: self.cache.pop(key, None), keys)
 
   def clean(self):
-    self.data.clear()
+    self.cache.clear()
