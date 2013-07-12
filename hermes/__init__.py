@@ -45,14 +45,14 @@ class Hermes(object):
       :tags:  Optional. Cache entry tag list.
       
     ``@cache`` decoration is supported as well as 
-    ``@cache(ttl = 7200, tags = ('tag1', 'tag2'))``.'''
+    ``@cache(ttl = 7200, tags = ('tag1', 'tag2'), key = lambda fn, *args, **kwargs: 'mykey')``.'''
     
     if args and isinstance(args[0], (types.FunctionType, types.MethodType)):
       # @cache
       return Cached(self._backend, self._mangler, self._ttl, args[0])
     else:
       # @cache()
-      return lambda fn: Cached(self._backend, self._mangler, kwargs.get('ttl', self._ttl), fn, **kwargs)
+      return lambda fn: Cached(self._backend, self._mangler, kwargs.pop('ttl', self._ttl), fn, **kwargs)
     
   def clean(self, tags = None):
     if tags:
