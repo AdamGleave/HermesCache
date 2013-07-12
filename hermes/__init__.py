@@ -4,7 +4,6 @@
 
 
 import types
-import os
 import hashlib
 import cPickle as pickle
 import functools
