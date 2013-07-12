@@ -10,8 +10,6 @@ import cPickle as pickle
 import functools
 
 from backend import AbstractBackend
-from backend.dict import Dict
-from backend.null import Null
 
 
 __all__ = ['Hermes']
