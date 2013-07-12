@@ -8,7 +8,7 @@ setup(
   packages         = ['hermes', 'hermes.test'],
   url              = 'http://code.google.com/p/hermes-py/',
   license          = 'LGPL',
-  description      = 'Python caching library with tab-based imvalidation',
+  description      = 'Python caching library with tag-based invalidation and dogpile effect prevention',
   long_description = open('README.txt').read(),
   platforms        = ['Any'],
   classifiers      = [
