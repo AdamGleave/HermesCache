@@ -148,20 +148,20 @@ class TestDict(test.TestCase):
     self.assertEqual(0,  self.fixture.calls)
     self.assertEqual({}, self.testee._backend.cache)
     
-    self.assertEqual('ahba', self.fixture.all('alpha', 'beta'))
-    self.assertEqual(1,      self.fixture.calls)
+    self.assertEqual({'a': ['alpha'], 'b': {'b': 'beta'}}, self.fixture.all('alpha', 'beta'))
+    self.assertEqual(1, self.fixture.calls)
     self.assertEqual({
       'cache:tag:a' : '0c7bcfba3c9e6726',
       'cache:tag:z' : 'faee633dd7cb041d',
-      'mk:alpha:beta:85642a5983f33b10' : 'ahba'
+      'mk:alpha:beta:85642a5983f33b10' : {'a': ['alpha'], 'b': {'b': 'beta'}}
     }, self.testee._backend.cache)
     
-    self.assertEqual('ahba', self.fixture.all('alpha', 'beta'))
-    self.assertEqual(1,      self.fixture.calls)
+    self.assertEqual({'a': ['alpha'], 'b': {'b': 'beta'}}, self.fixture.all('alpha', 'beta'))
+    self.assertEqual(1, self.fixture.calls)
     self.assertEqual({
       'cache:tag:a' : '0c7bcfba3c9e6726',
       'cache:tag:z' : 'faee633dd7cb041d',
-      'mk:alpha:beta:85642a5983f33b10' : 'ahba'
+      'mk:alpha:beta:85642a5983f33b10' : {'a': ['alpha'], 'b': {'b': 'beta'}}
     }, self.testee._backend.cache)
     
     self.fixture.all.invalidate('alpha', 'beta')

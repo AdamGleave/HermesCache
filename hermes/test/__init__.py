@@ -53,6 +53,6 @@ def createFixture(cache):
     @cache(tags = ('a', 'z'), key = lambda fn, *args, **kwargs: 'mk:{0}:{1}'.format(*args[1:]), ttl = 1200)
     def all(self, a, b):
       self.calls += 1
-      return '{0}~{1}'.format(a, b)[::3]
+      return {'a' : [a], 'b' : {'b' : b}}
     
   return Fixture()
