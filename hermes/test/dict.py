@@ -260,7 +260,7 @@ class TestDict(test.TestCase):
     
     del log[:]
     self.testee.clean()
-    self.testee._backend.lock = hermes.backend.BaseLock() # don't lock to see the difference
+    self.testee._backend.lock = hermes.backend.BaseLock() # now see a dogpile 
     
     threads = map(lambda i: threading.Thread(target = bar, args = ('alpha', 'beta')), range(4))
     map(threading.Thread.start, threads)

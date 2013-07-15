@@ -7,7 +7,8 @@ import collections
 
 
 class BaseLock(object):
-  '''Base locking class. Implements context manger protocol.'''
+  '''Base locking class. Implements context manger protocol. Mocks ``acquire`` and ``release``
+  i.e. it always acquires.'''
   
   key = None
   '''Implementation may be key-aware'''
