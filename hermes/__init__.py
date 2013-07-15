@@ -187,7 +187,7 @@ class Cached(object):
     # instance method.
     self._callable = types.MethodType(self._fn, instance, owner)
     
-    result = functools.partial(self.__call__, instance)
-    result.invalidate = self.invalidate
+    result            = functools.partial(self.__call__,   instance)
+    result.invalidate = functools.partial(self.invalidate, instance)
     
     return result
