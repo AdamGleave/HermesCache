@@ -15,6 +15,7 @@ __all__ = ['Hermes']
 
 
 class Hermes(object):
+  '''Cache facade''' 
   
   _backend = None
   '''Cache backend'''
@@ -37,12 +38,11 @@ class Hermes(object):
       self._mangler = Mangler()
 
   def __call__(self, *args, **kwargs):
-    '''Decorator that caches model method result. The following key 
-    arguments are supported:
+    '''Decorator that caches method or function result. The following key arguments are optional:
     
-      :key:   Optional. Lambda that provides custom key, otherwise internal key function is used.
-      :ttl:   Optional. Seconds until expiration, otherwise instance default is used.
-      :tags:  Optional. Cache entry tag list.
+      :key:   Lambda that provides custom key, otherwise ``Mangler.nameEntry`` is used.
+      :ttl:   Seconds until enry expiration, otherwise instance default is used.
+      :tags:  Cache entry tag list.
       
     ``@cache`` decoration is supported as well as 
     ``@cache(ttl = 7200, tags = ('tag1', 'tag2'), key = lambda fn, *args, **kwargs: 'mykey')``.'''
@@ -55,6 +55,8 @@ class Hermes(object):
       return lambda fn: Cached(self._backend, self._mangler, kwargs.pop('ttl', self._ttl), fn, **kwargs)
     
   def clean(self, tags = None):
+    '''If tags argument is omitted flushes all entries, otherwise removes provided tag entries'''
+    
     if tags:
       self._backend.remove(map(self._mangler.nameTag, tags))
     else:
@@ -62,6 +64,7 @@ class Hermes(object):
 
 
 class Mangler(object):
+  '''Key manager responsible for creating entry and tag keys, hashing and serialzing values'''
   
   prefix = 'cache'
   '''Prefix for cache and tag entries'''
@@ -100,14 +103,29 @@ class Mangler(object):
 
 
 class Cached(object):
+  '''A wrapper for cached function or method'''
   
-  _backend  = None
+  _backend = None
+  '''Cache backend'''
+  
+  _mangler = None
+  '''Key manager responsible for creating entry and tag keys, hashing and serialzing values'''
+  
+  _fn = None
+  '''This is always a decorated callable of ``types.FunctionType`` type'''
+  
   _callable = None
-  _fn       = None
-  _mangler  = None
-  _ttl      = None
+  '''This value stays ``types.FunctionType`` if a function is decorated, otherwise it is transformed
+  to ``types.MethodType`` by descriptor protocol implementation'''
+  
+  _ttl = None
+  '''Cache entry Time To Live for decarated callable'''
+  
   _keyFunc  = None
-  _tags     = None
+  '''Key creation function'''
+  
+  _tags = None
+  '''Cache entry tags for decarated callable'''
   
   
   def __init__(self, backend, mangler, ttl, fn, **kwargs):
