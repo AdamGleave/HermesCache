@@ -9,7 +9,7 @@ from . import AbstractBackend, BaseLock
 
 
 class ThreadLock(BaseLock):
-  '''Key-unaware thread lock.'''
+  '''Key-unaware thread lock'''
   
   def __init__(self):
     self._lock = threading.Lock()
