@@ -31,6 +31,9 @@ class TestDict(test.TestCase):
       'cache:entry:Fixture:simple:109cc9a8853ebcb1' : 'ateb+ahpla'
     }, self.testee._backend.cache)
     
+    self.fixture.simple.invalidate('alpha', 'beta')
+    self.assertEqual({}, self.testee._backend.cache)
+    
   def testTagged(self):
     self.assertEqual(0,  self.fixture.calls)
     self.assertEqual({}, self.testee._backend.cache)
@@ -47,6 +50,12 @@ class TestDict(test.TestCase):
     self.assertEqual(1,       self.fixture.calls)
     self.assertEqual({
       'cache:entry:Fixture:tagged:109cc9a8853ebcb1:94ec8f95f633c623' : 'ae-hl',
+      'cache:tag:rock' : '913932947ddd381a',
+      'cache:tag:tree' : 'ca7c89f9acb93af3'
+    }, self.testee._backend.cache)
+    
+    self.fixture.tagged.invalidate('alpha', 'beta')
+    self.assertEqual({
       'cache:tag:rock' : '913932947ddd381a',
       'cache:tag:tree' : 'ca7c89f9acb93af3'
     }, self.testee._backend.cache)
@@ -76,6 +85,11 @@ class TestDict(test.TestCase):
     self.assertEqual('ateb+ahpla', foo('alpha', 'beta'))
     self.assertEqual(1, counter['foo'])
     self.assertEqual({'cache:entry:foo:109cc9a8853ebcb1' : 'ateb+ahpla'}, self.testee._backend.cache)
+    
+    foo.invalidate('alpha', 'beta')
+    self.assertEqual(1,  counter['foo'])
+    self.assertEqual({}, self.testee._backend.cache)
+
 
     self.testee.clean()
     self.assertEqual(0,  counter['bar'])
@@ -95,6 +109,13 @@ class TestDict(test.TestCase):
       'cache:tag:a' : '0c7bcfba3c9e6726',
       'cache:tag:z' : 'faee633dd7cb041d',
       'mk:alpha:beta:85642a5983f33b10' : 'apabt'
+    }, self.testee._backend.cache)
+    
+    bar.invalidate('alpha', 'beta')
+    self.assertEqual(1,  counter['foo'])
+    self.assertEqual({
+      'cache:tag:a' : '0c7bcfba3c9e6726',
+      'cache:tag:z' : 'faee633dd7cb041d'
     }, self.testee._backend.cache)
 
   def testKey(self):
@@ -117,12 +138,18 @@ class TestDict(test.TestCase):
       'mykey:alpha:beta:18af4f5a6e37713d' : 'apabt'
     }, self.testee._backend.cache)
     
+    self.fixture.key.invalidate('alpha', 'beta')
+    self.assertEqual({
+      'cache:tag:ash'   : '25f9af512cf657ae',
+      'cache:tag:stone' : '080f56f33dfc865b'
+    }, self.testee._backend.cache)
+    
   def testAll(self):
     self.assertEqual(0,  self.fixture.calls)
     self.assertEqual({}, self.testee._backend.cache)
     
     self.assertEqual('ahba', self.fixture.all('alpha', 'beta'))
-    self.assertEqual(1,       self.fixture.calls)
+    self.assertEqual(1,      self.fixture.calls)
     self.assertEqual({
       'cache:tag:a' : '0c7bcfba3c9e6726',
       'cache:tag:z' : 'faee633dd7cb041d',
@@ -130,13 +157,19 @@ class TestDict(test.TestCase):
     }, self.testee._backend.cache)
     
     self.assertEqual('ahba', self.fixture.all('alpha', 'beta'))
-    self.assertEqual(1,       self.fixture.calls)
+    self.assertEqual(1,      self.fixture.calls)
     self.assertEqual({
       'cache:tag:a' : '0c7bcfba3c9e6726',
       'cache:tag:z' : 'faee633dd7cb041d',
       'mk:alpha:beta:85642a5983f33b10' : 'ahba'
     }, self.testee._backend.cache)
     
+    self.fixture.all.invalidate('alpha', 'beta')
+    self.assertEqual({
+      'cache:tag:a' : '0c7bcfba3c9e6726',
+      'cache:tag:z' : 'faee633dd7cb041d'
+    }, self.testee._backend.cache)
+  
   def testClean(self):
     self.assertEqual(0,  self.fixture.calls)
     self.assertEqual({}, self.testee._backend.cache)
