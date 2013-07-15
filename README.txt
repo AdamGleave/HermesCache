@@ -3,12 +3,13 @@
 HermesCache
 ***********
 
-Hermes is yet another Python caching library with tab-based imvalidation. The goals to achieve:
+Hermes is a Python caching library. The requirements it was designed to fulfill:
   
   * Tag-based cache invalidation,
-  * Simple and flexible decorator as end-user API,
-  * Interface for multiple backend,
-  * Main backend is Redis.
+  * Dogpile effect prvention,
+  * Straightforward design,
+  * Simple, at the same time, flexible decorator as end-user API,
+  * Interface for implementing multiple backends.
 
   
 Reviewed implementations:
@@ -32,7 +33,7 @@ Reviewed implementations:
       * prevents dogpile effect      
     Con:
       * no cache entry tagging
-      * big codebase
+      * complicated codebase
       * not concise end-user API
   
   * cache-tagging
@@ -40,6 +41,6 @@ Reviewed implementations:
     Pro:
       * cache entry tagging      
     Con:
-      * designed for the news site scaffolding framework
-      * bloated
+      * designed for the news website scaffolding framework
+      * thus bloat is all around
        
