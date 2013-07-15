@@ -6,7 +6,7 @@
 import collections
 
 
-class BaseLock(object):
+class AbstractLock(object):
   '''Base locking class. Implements context manger protocol. Mocks ``acquire`` and ``release``
   i.e. it always acquires.'''
   
@@ -43,7 +43,7 @@ class AbstractBackend(object):
   '''Abstract backend'''
 
   lock = None
-  '''Subclass or instance of ``BaseLock``'''
+  '''Subclass or instance of ``AbstractLock``'''
   
   mangler = None
   '''Key manager responsible for creating keys, hashing and serialzation'''
@@ -51,7 +51,7 @@ class AbstractBackend(object):
 
   def __init__(self, mangler):
     self.mangler = mangler
-    self.lock    = BaseLock(mangler)
+    self.lock    = AbstractLock(mangler)
     
   @staticmethod
   def _isScalar(value):

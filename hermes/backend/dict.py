@@ -5,10 +5,10 @@
 
 import threading
 
-from . import AbstractBackend, BaseLock
+from . import AbstractBackend, AbstractLock
 
 
-class ThreadLock(BaseLock):
+class ThreadLock(AbstractLock):
   '''Key-unaware thread lock'''
   
   def __init__(self, mangler = None):
@@ -24,7 +24,7 @@ class ThreadLock(BaseLock):
 
 
 class Dict(AbstractBackend):
-  '''Test purpose backend implementation. Does not implement entry expiry.'''
+  '''Test purpose backend implementation. Does not support entry expiry.'''
   
   
   cache = None

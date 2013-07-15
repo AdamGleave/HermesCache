@@ -8,50 +8,58 @@ import time
 import pickle
 
 import hermes.test as test
-import hermes.backend.dict
+import hermes.backend.redispy
 
 
-class TestDict(test.TestCase):
+class TestRedis(test.TestCase):
   
   def setUp(self):
-    self.testee  = hermes.Hermes(hermes.backend.dict.Dict, ttl = 360) 
+    self.testee = hermes.Hermes(hermes.backend.redispy.Redis, ttl = 360, lockTimeout = 120) 
     self.fixture = test.createFixture(self.testee) 
     
     self.testee.clean()
   
-  def unpickleCache(self):
-    return {k : pickle.loads(v) for k, v in self.testee._backend.cache.items()}
-  
   def testSimple(self):
-    self.assertEqual(0,  self.fixture.calls)
-    self.assertEqual({}, self.unpickleCache())
+    self.assertEqual(0, self.fixture.calls)
+    self.assertEqual(0, self.testee._backend.client.dbsize())
     
     self.assertEqual('ateb+ahpla', self.fixture.simple('alpha', 'beta'))
     self.assertEqual(1, self.fixture.calls)
-    self.assertEqual({
-      'cache:entry:Fixture:simple:109cc9a8853ebcb1' : 'ateb+ahpla'
-    }, self.unpickleCache())
+    self.assertEqual(1, self.testee._backend.client.dbsize())
+
+    key = 'cache:entry:Fixture:simple:109cc9a8853ebcb1'
+    self.assertEqual(360, self.testee._backend.client.ttl(key))
+    self.assertEqual('ateb+ahpla', pickle.loads(self.testee._backend.client.get(key)))
     
     self.assertEqual('ateb+ahpla', self.fixture.simple('alpha', 'beta'))
     self.assertEqual(1, self.fixture.calls)
-    self.assertEqual({
-      'cache:entry:Fixture:simple:109cc9a8853ebcb1' : 'ateb+ahpla'
-    }, self.unpickleCache())
+    self.assertEqual(1, self.testee._backend.client.dbsize())
+    
+    key = 'cache:entry:Fixture:simple:109cc9a8853ebcb1'
+    self.assertEqual(360, self.testee._backend.client.ttl(key))
+    self.assertEqual('ateb+ahpla', pickle.loads(self.testee._backend.client.get(key)))
     
     self.fixture.simple.invalidate('alpha', 'beta')
-    self.assertEqual({}, self.unpickleCache())
+    self.assertEqual(0, self.testee._backend.client.dbsize())
     
   def testTagged(self):
-    self.assertEqual(0,  self.fixture.calls)
-    self.assertEqual({}, self.unpickleCache())
+    self.assertEqual(0, self.fixture.calls)
+    self.assertEqual(0, self.testee._backend.client.dbsize())
     
     self.assertEqual('ae-hl', self.fixture.tagged('alpha', 'beta'))
     self.assertEqual(1,       self.fixture.calls)
-    self.assertEqual({
-      'cache:entry:Fixture:tagged:109cc9a8853ebcb1:94ec8f95f633c623' : 'ae-hl',
-      'cache:tag:rock' : '913932947ddd381a',
-      'cache:tag:tree' : 'ca7c89f9acb93af3'
-    }, self.unpickleCache())
+    self.assertEqual(3,       self.testee._backend.client.dbsize())
+    
+    
+    
+    key = 'cache:entry:Fixture:simple:109cc9a8853ebcb1'
+    self.assertEqual(360, self.testee._backend.client.ttl(key))
+    self.assertEqual(None, self.testee._backend.client.ttl('cache:tag:rock'))
+    self.assertEqual(None, self.testee._backend.client.ttl('cache:tag:tree'))
+    
+    self.assertEqual('ateb+ahpla', pickle.loads(self.testee._backend.client.get(key)))
+    self.assertEqual('913932947ddd381a', pickle.loads(self.testee._backend.client.get('cache:tag:tree')))
+    self.assertEqual('ca7c89f9acb93af3', pickle.loads(self.testee._backend.client.get('cache:tag:tree')))
     
     self.assertEqual('ae-hl', self.fixture.tagged('alpha', 'beta'))
     self.assertEqual(1,       self.fixture.calls)

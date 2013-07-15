@@ -1,14 +1,15 @@
 '''
 @author: saaj
+@note: named *redispy* instead of *redis* because confilicts under test environment
 '''
 
 
+from . import AbstractBackend, AbstractLock
+
 import redis
 
-from . import AbstractBackend, BaseLock
 
-
-class RedisLock(BaseLock):
+class RedisLock(AbstractLock):
   '''Key-aware distrubuted lock'''
   
   lock = None
@@ -22,10 +23,10 @@ class RedisLock(BaseLock):
 
   def acquire(self, wait = True):
     self.lock.name = self.key
-    return self._lock.acquire(wait)
+    return self.lock.acquire(wait)
 
   def release(self):
-    self._lock.release()
+    self.lock.release()
 
 
 class Redis(AbstractBackend):
@@ -65,7 +66,7 @@ class Redis(AbstractBackend):
   
   def load(self, keys):
     if self._isScalar(keys):
-      value = self.cache.get(keys, None)
+      value = self.client.get(keys)
       if value is not None:
         value = self.mangler.load(value)
       return value
