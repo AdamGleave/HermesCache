@@ -21,21 +21,21 @@ class Hermes(object):
   '''Cache backend'''
   
   _mangler = None
-  '''Key manager responsible for creating entry and tag keys, hashing and serialzing values'''
+  '''Key manager responsible for creating keys, hashing and serialzation'''
   
   _ttl = None
   '''Default cache entry Time To Live'''
   
   
-  def __init__(self, backend, ttl = 3600, mangler = None):
-    assert issubclass(type(backend), AbstractBackend)
-    self._backend = backend
-    
+  def __init__(self, backendClass, ttl = 3600, mangler = None, **kwargs):
     self._ttl = ttl
     
     self._mangler = mangler
     if not self._mangler:
       self._mangler = Mangler()
+      
+    assert issubclass(backendClass, AbstractBackend)
+    self._backend = backendClass(self._mangler, **kwargs)
 
   def __call__(self, *args, **kwargs):
     '''Decorator that caches method or function result. The following key arguments are optional:
@@ -64,7 +64,7 @@ class Hermes(object):
 
 
 class Mangler(object):
-  '''Key manager responsible for creating entry and tag keys, hashing and serialzing values'''
+  '''Key manager responsible for creating keys, hashing and serialzation'''
   
   prefix = 'cache'
   '''Prefix for cache and tag entries'''
@@ -75,6 +75,9 @@ class Mangler(object):
   
   def dump(self, value):
     return pickle.dumps(value, protocol = pickle.HIGHEST_PROTOCOL)
+  
+  def load(self, value):
+    return pickle.loads(value)
   
   def nameEntry(self, fn, *args, **kwargs):
     result = [self.prefix, 'entry']
@@ -100,6 +103,9 @@ class Mangler(object):
   def hashTags(self, tagMap):
     values = map(lambda (k, v): v, sorted(tagMap.items()))
     return self.hash(':'.join(values))
+  
+  def nameLock(self, entryKey):
+    return u':'.join([self.prefix, 'lock', ':'.join(entryKey.split(':')[2:])])
 
 
 class Cached(object):
@@ -109,7 +115,7 @@ class Cached(object):
   '''Cache backend'''
   
   _mangler = None
-  '''Key manager responsible for creating entry and tag keys, hashing and serialzing values'''
+  '''Key manager responsible for creating keys, hashing and serialzing values'''
   
   _fn = None
   '''This is always a decorated callable of ``types.FunctionType`` type'''
@@ -150,7 +156,7 @@ class Cached(object):
   def _save(self, key, value):
     if self._tags:
       tagMap = self._mangler.mapTags(self._tags)
-      self._backend.save(map = tagMap, ttl = None)
+      self._backend.save(mapping = tagMap, ttl = None)
       key += ':' + self._mangler.hashTags(tagMap)
       
     return self._backend.save(key, value, ttl = self._ttl)

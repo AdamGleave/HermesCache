@@ -11,14 +11,16 @@ from . import AbstractBackend, BaseLock
 class ThreadLock(BaseLock):
   '''Key-unaware thread lock'''
   
-  def __init__(self):
-    self._lock = threading.Lock()
+  def __init__(self, mangler = None):
+    super(ThreadLock, self).__init__(mangler)
+    
+    self.lock = threading.Lock()
 
   def acquire(self, wait = True):
-    return self._lock.acquire(wait)
+    return self.lock.acquire(wait)
 
   def release(self):
-    self._lock.release()
+    self.lock.release()
 
 
 class Dict(AbstractBackend):
@@ -29,21 +31,26 @@ class Dict(AbstractBackend):
   '''A dict intance'''
   
   
-  def __init__(self):
-    self.lock  = ThreadLock()
+  def __init__(self, mangler):
+    super(Dict, self).__init__(mangler)
+    
+    self.lock  = ThreadLock(mangler)
     self.cache = {}
   
-  def save(self, key = None, value = None, map = None, ttl = None):
-    if not map:
-      self.cache[key] = value
-    else:
-      self.cache.update(map)
+  def save(self, key = None, value = None, mapping = None, ttl = None):
+    if not mapping:
+      mapping = {key : value}
+
+    self.cache.update({k : self.mangler.dump(v) for k, v in mapping.items()})
   
   def load(self, keys):
     if self._isScalar(keys):
-      return self.cache.get(keys, None)
+      value = self.cache.get(keys, None)
+      if value is not None:
+        value = self.mangler.load(value)
+      return value
     else:
-      return {k : self.cache[k] for k in keys if k in self.cache}
+      return {k : self.mangler.load(self.cache[k]) for k in keys if k in self.cache}
   
   def remove(self, keys):
     if self._isScalar(keys):

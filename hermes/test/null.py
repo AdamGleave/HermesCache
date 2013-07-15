@@ -10,7 +10,7 @@ import hermes.backend.null
 class TestNull(test.TestCase):
   
   def setUp(self):
-    self.testee  = hermes.Hermes(hermes.backend.null.Null(), ttl = 360) 
+    self.testee  = hermes.Hermes(hermes.backend.null.Null, ttl = 360) 
     self.fixture = test.createFixture(self.testee) 
     
     self.testee.clean()

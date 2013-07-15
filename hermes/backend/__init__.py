@@ -13,11 +13,17 @@ class BaseLock(object):
   key = None
   '''Implementation may be key-aware'''
 
+  mangler = None
+  '''Key manager responsible for creating keys, hashing and serialzation'''
+
+
+  def __init__(self, mangler = None):
+    self.mangler = mangler
 
   def __call__(self, key):
     '''To be used in with statement to provide a key to lock'''
     
-    self.key = key
+    self.key = self.mangler.nameLock(key) if self.mangler else key 
     return self
 
   def __enter__(self):
@@ -36,15 +42,22 @@ class BaseLock(object):
 class AbstractBackend(object):
   '''Abstract backend'''
 
-  lock = BaseLock()
+  lock = None
   '''Subclass or instance of ``BaseLock``'''
   
+  mangler = None
+  '''Key manager responsible for creating keys, hashing and serialzation'''
+  
 
+  def __init__(self, mangler):
+    self.mangler = mangler
+    self.lock    = BaseLock(mangler)
+    
   @staticmethod
   def _isScalar(value):
     return not isinstance(value, collections.Iterable) or isinstance(value, basestring)
 
-  def save(self, key = None, value = None, map = None, ttl = None):
+  def save(self, key = None, value = None, mapping = None, ttl = None):
     raise NotImplementedError()
   
   def load(self, keys):

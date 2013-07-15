@@ -9,7 +9,7 @@ from . import AbstractBackend
 class Null(AbstractBackend):
   '''Noop backend implementation. Can be used for temporary cache disabling.'''
   
-  def save(self, key = None, value = None, map = None, ttl = None):
+  def save(self, key = None, value = None, mapping = None, ttl = None):
     pass
   
   def load(self, keys):
