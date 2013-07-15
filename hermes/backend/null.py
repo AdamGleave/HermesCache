@@ -13,7 +13,7 @@ class Null(AbstractBackend):
     pass
   
   def load(self, keys):
-    return None
+    return None if self._isScalar(keys) else {} 
   
   def remove(self, keys):
     pass

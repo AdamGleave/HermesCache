@@ -7,40 +7,11 @@ import hermes.test as test
 import hermes.backend.dict
 
 
-cache = hermes.Hermes(hermes.backend.dict.Dict(), ttl = 360) 
-
-
-class Fixture:
-  
-  calls = 0
-  
-  
-  @cache
-  def simple(self, a, b):
-    self.calls += 1
-    return '{0}+{1}'.format(a, b)[::-1]
-  
-  @cache(tags = ('rock', 'tree'))
-  def tagged(self, a, b):
-    self.calls += 1
-    return '{0}-{1}'.format(a, b)[::-2]
-  
-  @cache(tags = ('rock', 'tree'), key = lambda fn, *args, **kwargs: 't:{0}:{1}'.format(*args))
-  def key(self, a, b):
-    self.calls += 1
-    return '{0}*{1}'.format(a, b)[::2]
-  
-  @cache(tags = ('rock', 'tree'), key = lambda fn, *args, **kwargs: 't:{0}:{1}'.format(*args), ttl = 1200)
-  def all(self, a, b):
-    self.calls += 1
-    return '{0}~{1}'.format(a, b)[::3]
-
-
 class TestDict(test.TestCase):
   
   def setUp(self):
-    self.testee  = cache
-    self.fixture = Fixture() 
+    self.testee  = hermes.Hermes(hermes.backend.dict.Dict(), ttl = 360) 
+    self.fixture = test.createFixture(self.testee) 
     
     self.testee.clean()
   
@@ -81,18 +52,90 @@ class TestDict(test.TestCase):
     }, self.testee._backend.cache)
     
   def testFunction(self):
-    @cache
+    counter = dict(foo = 0, bar = 0)
+    
+    @self.testee
     def foo(a, b):
+      counter['foo'] += 1
       return '{0}+{1}'.format(a, b)[::-1]
     
+    key = lambda fn, *args, **kwargs: 'mk:{0}:{1}'.format(*args)
+    @self.testee(tags = ('a', 'z'), key = key, ttl = 120)
+    def bar(a, b):
+      counter['bar'] += 1
+      return '{0}-{1}'.format(a, b)[::2]
     
+    
+    self.assertEqual(0,  counter['foo'])
     self.assertEqual({}, self.testee._backend.cache)
     
     self.assertEqual('ateb+ahpla', foo('alpha', 'beta'))
+    self.assertEqual(1, counter['foo'])
     self.assertEqual({'cache:entry:foo:109cc9a8853ebcb1' : 'ateb+ahpla'}, self.testee._backend.cache)
     
     self.assertEqual('ateb+ahpla', foo('alpha', 'beta'))
+    self.assertEqual(1, counter['foo'])
     self.assertEqual({'cache:entry:foo:109cc9a8853ebcb1' : 'ateb+ahpla'}, self.testee._backend.cache)
+
+    self.testee.clean()
+    self.assertEqual(0,  counter['bar'])
+    self.assertEqual({}, self.testee._backend.cache)
+    
+    self.assertEqual('apabt', bar('alpha', 'beta'))
+    self.assertEqual(1,       counter['bar'])
+    self.assertEqual({
+      'cache:tag:a' : '0c7bcfba3c9e6726',
+      'cache:tag:z' : 'faee633dd7cb041d',
+      'mk:alpha:beta:85642a5983f33b10' : 'apabt'
+    }, self.testee._backend.cache)
+    
+    self.assertEqual('apabt', bar('alpha', 'beta'))
+    self.assertEqual(1,       counter['bar'])
+    self.assertEqual({
+      'cache:tag:a' : '0c7bcfba3c9e6726',
+      'cache:tag:z' : 'faee633dd7cb041d',
+      'mk:alpha:beta:85642a5983f33b10' : 'apabt'
+    }, self.testee._backend.cache)
+
+  def testKey(self):
+    self.assertEqual(0,  self.fixture.calls)
+    self.assertEqual({}, self.testee._backend.cache)
+    
+    self.assertEqual('apabt', self.fixture.key('alpha', 'beta'))
+    self.assertEqual(1,       self.fixture.calls)
+    self.assertEqual({
+      'cache:tag:ash'   : '25f9af512cf657ae',
+      'cache:tag:stone' : '080f56f33dfc865b',
+      'mykey:alpha:beta:18af4f5a6e37713d' : 'apabt'
+    }, self.testee._backend.cache)
+    
+    self.assertEqual('apabt', self.fixture.key('alpha', 'beta'))
+    self.assertEqual(1,       self.fixture.calls)
+    self.assertEqual({
+      'cache:tag:ash'   : '25f9af512cf657ae',
+      'cache:tag:stone' : '080f56f33dfc865b',
+      'mykey:alpha:beta:18af4f5a6e37713d' : 'apabt'
+    }, self.testee._backend.cache)
+    
+  def testAll(self):
+    self.assertEqual(0,  self.fixture.calls)
+    self.assertEqual({}, self.testee._backend.cache)
+    
+    self.assertEqual('ahba', self.fixture.all('alpha', 'beta'))
+    self.assertEqual(1,       self.fixture.calls)
+    self.assertEqual({
+      'cache:tag:a' : '0c7bcfba3c9e6726',
+      'cache:tag:z' : 'faee633dd7cb041d',
+      'mk:alpha:beta:85642a5983f33b10' : 'ahba'
+    }, self.testee._backend.cache)
+    
+    self.assertEqual('ahba', self.fixture.all('alpha', 'beta'))
+    self.assertEqual(1,       self.fixture.calls)
+    self.assertEqual({
+      'cache:tag:a' : '0c7bcfba3c9e6726',
+      'cache:tag:z' : 'faee633dd7cb041d',
+      'mk:alpha:beta:85642a5983f33b10' : 'ahba'
+    }, self.testee._backend.cache)
     
   def testClean(self):
     self.assertEqual(0,  self.fixture.calls)
