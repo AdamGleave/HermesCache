@@ -28,7 +28,7 @@ class Hermes(object):
   
   
   def __init__(self, backend, ttl = 3600, mangler = None):
-    assert isinstance(backend, AbstractBackend)
+    assert issubclass(type(backend), AbstractBackend)
     self._backend = backend
     
     self._ttl = ttl
@@ -115,8 +115,8 @@ class Cached(object):
   '''This is always a decorated callable of ``types.FunctionType`` type'''
   
   _callable = None
-  '''This value stays ``types.FunctionType`` if a function is decorated, otherwise it is transformed
-  to ``types.MethodType`` by descriptor protocol implementation'''
+  '''This value stays ``types.FunctionType`` if a function is decorated, otherwise it is 
+  transformed to ``types.MethodType`` by descriptor protocol implementation'''
   
   _ttl = None
   '''Cache entry Time To Live for decarated callable'''
@@ -172,8 +172,12 @@ class Cached(object):
     key   = self._keyFunc(self._callable, *args, **kwargs)
     value = self._load(key)
     if value is None:
-      value = self._fn(*args, **kwargs)
-      self._save(key, value)
+      with self._backend.lock(key):
+        # it's better to read twice than lock every read
+        value = self._load(key)
+        if value is None:
+          value = self._fn(*args, **kwargs)
+          self._save(key, value)
     return value
   
   def __get__(self, instance, owner):

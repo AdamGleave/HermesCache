@@ -6,27 +6,42 @@
 import collections
 
 
-class AbstractLock(object):
-  '''Abstract lock.'''
-    
-  def acquire(self, key = None, wait = True):
-    raise NotImplementedError()
+class BaseLock(object):
+  '''Base locking class. Implements context manger protocol.'''
+  
+  key = None
+  '''Implementation may be key-aware'''
 
-  def release(self, key = None):
-    raise NotImplementedError()
+
+  def __call__(self, key):
+    '''To be used in with statement to provide a key to lock'''
     
+    self.key = key
+    return self
+
+  def __enter__(self):
+    self.acquire()
+
+  def __exit__(self, type, value, traceback):
+    self.release()
     
+  def acquire(self, wait = True):
+    return True
+
+  def release(self):
+    pass
+
+
 class AbstractBackend(object):
-  '''Abstract backend.'''
+  '''Abstract backend'''
 
-  lock = None
-  '''Object that provides ``acquire`` and ``release`` functionality. 
-  Backend implementation may not the locking object.'''
+  lock = BaseLock()
+  '''Subclass or instance of ``BaseLock``'''
   
 
   @staticmethod
   def _isScalar(value):
-    return not isinstance(value, (collections.Iterable)) or isinstance(value, basestring)
+    return not isinstance(value, collections.Iterable) or isinstance(value, basestring)
 
   def save(self, key = None, value = None, map = None, ttl = None):
     raise NotImplementedError()

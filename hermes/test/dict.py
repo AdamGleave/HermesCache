@@ -3,6 +3,9 @@
 '''
 
 
+import threading
+import time
+
 import hermes.test as test
 import hermes.backend.dict
 
@@ -234,3 +237,82 @@ class TestDict(test.TestCase):
     
     self.assertEqual(4,  self.fixture.calls)
     self.assertEqual({}, self.testee._backend.cache)
+    
+  def testConcurrent(self):
+    log = []
+    key = lambda fn, *args, **kwargs: 'mk:{0}:{1}'.format(*args)
+    @self.testee(tags = ('a', 'z'), key = key, ttl = 120)
+    def bar(a, b):
+      log.append(1)
+      time.sleep(0.01)
+      return '{0}-{1}'.format(a, b)[::2]
+    
+    threads = map(lambda i: threading.Thread(target = bar, args = ('alpha', 'beta')), range(4))
+    map(threading.Thread.start, threads)
+    map(threading.Thread.join,  threads)
+    
+    self.assertEqual(1, sum(log))
+    self.assertEqual({
+      'mk:alpha:beta:85642a5983f33b10': 'apabt', 
+      'cache:tag:a' : '0c7bcfba3c9e6726', 
+      'cache:tag:z': 'faee633dd7cb041d'
+    }, self.testee._backend.cache)
+    
+    del log[:]
+    self.testee.clean()
+    self.testee._backend.lock = hermes.backend.BaseLock() # don't lock to see the difference
+    
+    threads = map(lambda i: threading.Thread(target = bar, args = ('alpha', 'beta')), range(4))
+    map(threading.Thread.start, threads)
+    map(threading.Thread.join,  threads)
+    
+    self.assertGreater(sum(log), 2)
+    self.assertEqual({
+      'mk:alpha:beta:85642a5983f33b10': 'apabt', 
+      'cache:tag:a' : '0c7bcfba3c9e6726', 
+      'cache:tag:z': 'faee633dd7cb041d'
+    }, self.testee._backend.cache)
+
+
+class TestDictLock(test.TestCase):
+  
+  def setUp(self):
+    self.testee = hermes.backend.dict.ThreadLock()
+  
+  def testAcquire(self):
+    self.assertTrue(self.testee.acquire(True))
+    self.assertFalse(self.testee.acquire(False))
+    
+    self.testee.release()
+    
+    self.assertTrue(self.testee.acquire(True))
+    self.assertFalse(self.testee.acquire(False))
+    
+  def testRelease(self):
+    self.assertTrue(self.testee.acquire(True))
+    self.assertFalse(self.testee.acquire(False))
+    
+    self.testee.release()
+    
+    self.assertTrue(self.testee.acquire(True))
+    self.assertFalse(self.testee.acquire(False))
+    
+  def testWith(self):
+    with self.testee:
+      self.assertFalse(self.testee.acquire(False))
+      
+  def testConcurrent(self):
+    log   = []
+    check = threading.Lock()
+    def target():
+      with self.testee(key = 123):
+        log.append(check.acquire(False))
+        time.sleep(0.05)
+        check.release()
+        time.sleep(0.05)
+    
+    threads = map(lambda i: threading.Thread(target = target), range(4))
+    map(threading.Thread.start, threads)
+    map(threading.Thread.join,  threads)
+    
+    self.assertEqual([True] * 4, log)
