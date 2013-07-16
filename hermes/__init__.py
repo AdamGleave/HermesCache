@@ -11,7 +11,7 @@ import functools
 from backend import AbstractBackend
 
 
-__all__ = ['Hermes']
+__all__ = 'Hermes', 'Mangler'
 
 
 class Hermes(object):
