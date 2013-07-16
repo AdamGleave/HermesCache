@@ -14,55 +14,6 @@ from backend import AbstractBackend
 __all__ = 'Hermes', 'Mangler'
 
 
-class Hermes(object):
-  '''Cache facade''' 
-  
-  _backend = None
-  '''Cache backend'''
-  
-  _mangler = None
-  '''Key manager responsible for creating keys, hashing and serialzation'''
-  
-  _ttl = None
-  '''Default cache entry Time To Live'''
-  
-  
-  def __init__(self, backendClass, ttl = 3600, mangler = None, **kwargs):
-    self._ttl = ttl
-    
-    self._mangler = mangler
-    if not self._mangler:
-      self._mangler = Mangler()
-      
-    assert issubclass(backendClass, AbstractBackend)
-    self._backend = backendClass(self._mangler, **kwargs)
-
-  def __call__(self, *args, **kwargs):
-    '''Decorator that caches method or function result. The following key arguments are optional:
-    
-      :key:   Lambda that provides custom key, otherwise ``Mangler.nameEntry`` is used.
-      :ttl:   Seconds until enry expiration, otherwise instance default is used.
-      :tags:  Cache entry tag list.
-      
-    ``@cache`` decoration is supported as well as 
-    ``@cache(ttl = 7200, tags = ('tag1', 'tag2'), key = lambda fn, *args, **kwargs: 'mykey')``.'''
-    
-    if args and isinstance(args[0], (types.FunctionType, types.MethodType)):
-      # @cache
-      return Cached(self._backend, self._mangler, self._ttl, args[0])
-    else:
-      # @cache()
-      return lambda fn: Cached(self._backend, self._mangler, kwargs.pop('ttl', self._ttl), fn, **kwargs)
-    
-  def clean(self, tags = None):
-    '''If tags argument is omitted flushes all entries, otherwise removes provided tag entries'''
-    
-    if tags:
-      self._backend.remove(map(self._mangler.nameTag, tags))
-    else:
-      self._backend.clean()
-
-
 class Mangler(object):
   '''Key manager responsible for creating keys, hashing and serialzation'''
   
@@ -109,6 +60,56 @@ class Mangler(object):
     if parts[0] == self.prefix:
       entryKey = ':'.join(parts[2:]) 
     return u':'.join([self.prefix, 'lock', entryKey])
+
+
+class Hermes(object):
+  '''Cache facade''' 
+  
+  _backend = None
+  '''Cache backend'''
+  
+  _mangler = None
+  '''Key manager responsible for creating keys, hashing and serialzation'''
+  
+  _ttl = 3600
+  '''Default cache entry Time To Live'''
+  
+  
+  def __init__(self, backendClass, manglerClass = Mangler, **kwargs):
+    '''Key arguments comprise of ``ttl`` and backend parameters'''
+    
+    self._ttl = kwargs.pop('ttl', self._ttl)
+    
+    assert issubclass(manglerClass, Mangler)
+    self._mangler = manglerClass()
+    
+    assert issubclass(backendClass, AbstractBackend)
+    self._backend = backendClass(self._mangler, **kwargs)
+
+  def __call__(self, *args, **kwargs):
+    '''Decorator that caches method or function result. The following key arguments are optional:
+    
+      :key:   Lambda that provides custom key, otherwise ``Mangler.nameEntry`` is used.
+      :ttl:   Seconds until enry expiration, otherwise instance default is used.
+      :tags:  Cache entry tag list.
+      
+    ``@cache`` decoration is supported as well as 
+    ``@cache(ttl = 7200, tags = ('tag1', 'tag2'), key = lambda fn, *args, **kwargs: 'mykey')``.'''
+    
+    if args and isinstance(args[0], (types.FunctionType, types.MethodType)):
+      # @cache
+      return Cached(self._backend, self._mangler, self._ttl, args[0])
+    else:
+      # @cache()
+      return lambda fn: Cached(self._backend, self._mangler, kwargs.pop('ttl', self._ttl), fn, **kwargs)
+    
+  def clean(self, tags = None):
+    '''If tags argument is omitted flushes all entries, otherwise removes provided tag entries'''
+    
+    if tags:
+      self._backend.remove(map(self._mangler.nameTag, tags))
+    else:
+      self._backend.clean()
 
 
 class Cached(object):
