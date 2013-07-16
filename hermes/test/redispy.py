@@ -14,7 +14,7 @@ import hermes.backend.redispy
 class TestRedis(test.TestCase):
   
   def setUp(self):
-    self.testee = hermes.Hermes(hermes.backend.redispy.Redis, ttl = 360, lockTimeout = 120) 
+    self.testee = hermes.Hermes(hermes.backend.redispy.Backend, ttl = 360, lockTimeout = 120) 
     self.fixture = test.createFixture(self.testee) 
     
     self.testee.clean()
@@ -293,36 +293,37 @@ class TestRedis(test.TestCase):
 class TestRedisLock(test.TestCase):
   
   def setUp(self):
-    cache       = hermes.Hermes(hermes.backend.redispy.Redis) 
-    self.testee = hermes.backend.redispy.RedisLock(cache._backend.mangler, cache._backend.client)
+    cache       = hermes.Hermes(hermes.backend.redispy.Backend) 
+    self.testee = hermes.backend.redispy.Lock(cache._backend.mangler, cache._backend.client)
   
   def testAcquire(self):
-    self.assertTrue(self.testee.acquire(True))
-    self.assertFalse(self.testee.acquire(False))
-    
-    self.testee.release()
-    
-    self.assertTrue(self.testee.acquire(True))
-    self.assertFalse(self.testee.acquire(False))
-    
+    for _ in range(2):
+      try:
+        self.assertTrue(self.testee.acquire(True))
+        self.assertFalse(self.testee.acquire(False))
+        self.assertEqual('cache:lock:default', self.testee.lock.name)
+      finally:
+        self.testee.release()
+
   def testRelease(self):
-    self.assertTrue(self.testee.acquire(True))
-    self.assertFalse(self.testee.acquire(False))
-    
-    self.testee.release()
-    
-    self.assertTrue(self.testee.acquire(True))
-    self.assertFalse(self.testee.acquire(False))
+    for _ in range(2):
+      try:
+        self.assertTrue(self.testee.acquire(True))
+        self.assertFalse(self.testee.acquire(False))
+        self.assertEqual('cache:lock:default', self.testee.lock.name)
+      finally:
+        self.testee.release()
     
   def testWith(self):
-    with self.testee:
+    with self.testee('some:key'):
       self.assertFalse(self.testee.acquire(False))
+      self.assertEqual('cache:lock:some:key', self.testee.lock.name)
       
   def testConcurrent(self):
     log   = []
     check = threading.Lock()
     def target():
-      with self.testee(key = 123):
+      with self.testee(key = '123'):
         log.append(check.acquire(False))
         time.sleep(0.05)
         check.release()

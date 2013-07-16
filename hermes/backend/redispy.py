@@ -9,7 +9,7 @@ from . import AbstractBackend, AbstractLock
 import redis
 
 
-class RedisLock(AbstractLock):
+class Lock(AbstractLock):
   '''Key-aware distrubuted lock'''
   
   lock = None
@@ -17,19 +17,22 @@ class RedisLock(AbstractLock):
   
   
   def __init__(self, mangler, client, **kwargs):
-    super(RedisLock, self).__init__(mangler)
+    super(Lock, self).__init__(mangler)
     
-    self.lock = client.lock(None, **kwargs)
+    self.lock = client.lock(self.key, **kwargs)
+
+  def __call__(self, key):
+    self.lock.name = self.mangler.nameLock(key) 
+    return self
 
   def acquire(self, wait = True):
-    self.lock.name = self.key
     return self.lock.acquire(wait)
 
   def release(self):
     self.lock.release()
 
 
-class Redis(AbstractBackend):
+class Backend(AbstractBackend):
   '''Redis backend implementation'''
   
   client = None
@@ -37,7 +40,7 @@ class Redis(AbstractBackend):
   
   
   def __init__(self, mangler, **kwargs):
-    super(Redis, self).__init__(mangler)
+    super(Backend, self).__init__(mangler)
     
     self.client = redis.StrictRedis(**{
       'host'     : kwargs.get('host',     'localhost'),
@@ -46,7 +49,7 @@ class Redis(AbstractBackend):
       'db'       : kwargs.get('db',       0)
     })
     
-    self.lock = RedisLock(self.mangler, self.client, **{
+    self.lock = Lock(self.mangler, self.client, **{
       'timeout' : kwargs.get('lockTimeout', None),
       'sleep'   : kwargs.get('lockSleep',   0.1)
     })

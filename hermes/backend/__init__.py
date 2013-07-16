@@ -10,7 +10,7 @@ class AbstractLock(object):
   '''Base locking class. Implements context manger protocol. Mocks ``acquire`` and ``release``
   i.e. it always acquires.'''
   
-  key = None
+  key = 'default'
   '''Implementation may be key-aware'''
 
   mangler = None
@@ -19,6 +19,7 @@ class AbstractLock(object):
 
   def __init__(self, mangler = None):
     self.mangler = mangler
+    self.key     = self.mangler.nameLock(self.key) if self.mangler else self.key
 
   def __call__(self, key):
     '''To be used in with statement to provide a key to lock'''
@@ -58,13 +59,13 @@ class AbstractBackend(object):
     return not isinstance(value, collections.Iterable) or isinstance(value, basestring)
 
   def save(self, key = None, value = None, mapping = None, ttl = None):
-    raise NotImplementedError()
+    pass
   
   def load(self, keys):
-    raise NotImplementedError()
+    return None if self._isScalar(keys) else {} 
   
   def remove(self, keys):
-    raise NotImplementedError()
+    pass
   
   def clean(self):
-    raise NotImplementedError()
+    pass

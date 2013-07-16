@@ -3,14 +3,17 @@
 '''
 
 
+import threading
+import time
+
 import hermes.test as test
-import hermes.backend.null
+import hermes.backend
 
 
-class TestNull(test.TestCase):
+class TestAbstract(test.TestCase):
   
   def setUp(self):
-    self.testee  = hermes.Hermes(hermes.backend.null.Null, ttl = 360) 
+    self.testee  = hermes.Hermes(hermes.backend.AbstractBackend, ttl = 360) 
     self.fixture = test.createFixture(self.testee) 
     
     self.testee.clean()
@@ -115,3 +118,47 @@ class TestNull(test.TestCase):
     self.testee.clean()
     
     self.assertEqual(6,  self.fixture.calls)
+
+
+class TestAbstractLock(test.TestCase):
+  
+  def setUp(self):
+    self.testee = hermes.backend.AbstractLock()
+  
+  def testAcquire(self):
+    for _ in range(2):
+      try:
+        self.assertTrue(self.testee.acquire(True))
+        self.assertTrue(self.testee.acquire(False))
+      finally:
+        self.testee.release()
+    
+  def testRelease(self):
+    for _ in range(2):
+      try:
+        self.assertTrue(self.testee.acquire(True))
+        self.assertTrue(self.testee.acquire(False))
+      finally:
+        self.testee.release()
+    
+  def testWith(self):
+    with self.testee:
+      self.assertTrue(self.testee.acquire(False))
+      
+  def testConcurrent(self):
+    log   = []
+    check = threading.Lock()
+    def target():
+      with self.testee(key = 123):
+        locked = check.acquire(False)
+        log.append(locked)
+        time.sleep(0.05)
+        if locked:
+          check.release()
+        time.sleep(0.05)
+    
+    threads = map(lambda i: threading.Thread(target = target), range(4))
+    map(threading.Thread.start, threads)
+    map(threading.Thread.join,  threads)
+    
+    self.assertEqual([True, False, False, False], log)

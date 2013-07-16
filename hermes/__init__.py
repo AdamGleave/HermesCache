@@ -105,7 +105,10 @@ class Mangler(object):
     return self.hash(':'.join(values))
   
   def nameLock(self, entryKey):
-    return u':'.join([self.prefix, 'lock', ':'.join(entryKey.split(':')[2:])])
+    parts = entryKey.split(':')
+    if parts[0] == self.prefix:
+      entryKey = ':'.join(parts[2:]) 
+    return u':'.join([self.prefix, 'lock', entryKey])
 
 
 class Cached(object):

@@ -14,7 +14,7 @@ import hermes.backend.dict
 class TestDict(test.TestCase):
   
   def setUp(self):
-    self.testee  = hermes.Hermes(hermes.backend.dict.Dict, ttl = 360) 
+    self.testee  = hermes.Hermes(hermes.backend.dict.Backend, ttl = 360) 
     self.fixture = test.createFixture(self.testee) 
     
     self.testee.clean()
@@ -300,25 +300,23 @@ class TestDict(test.TestCase):
 class TestDictLock(test.TestCase):
   
   def setUp(self):
-    self.testee = hermes.backend.dict.ThreadLock()
+    self.testee = hermes.backend.dict.Lock()
   
   def testAcquire(self):
-    self.assertTrue(self.testee.acquire(True))
-    self.assertFalse(self.testee.acquire(False))
-    
-    self.testee.release()
-    
-    self.assertTrue(self.testee.acquire(True))
-    self.assertFalse(self.testee.acquire(False))
+    for _ in range(2):
+      try:
+        self.assertTrue(self.testee.acquire(True))
+        self.assertFalse(self.testee.acquire(False))
+      finally:
+        self.testee.release()
     
   def testRelease(self):
-    self.assertTrue(self.testee.acquire(True))
-    self.assertFalse(self.testee.acquire(False))
-    
-    self.testee.release()
-    
-    self.assertTrue(self.testee.acquire(True))
-    self.assertFalse(self.testee.acquire(False))
+    for _ in range(2):
+      try:
+        self.assertTrue(self.testee.acquire(True))
+        self.assertFalse(self.testee.acquire(False))
+      finally:
+        self.testee.release()
     
   def testWith(self):
     with self.testee:

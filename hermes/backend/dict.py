@@ -8,11 +8,11 @@ import threading
 from . import AbstractBackend, AbstractLock
 
 
-class ThreadLock(AbstractLock):
+class Lock(AbstractLock):
   '''Key-unaware thread lock'''
   
   def __init__(self, mangler = None):
-    super(ThreadLock, self).__init__(mangler)
+    super(Lock, self).__init__(mangler)
     
     self.lock = threading.Lock()
 
@@ -23,7 +23,7 @@ class ThreadLock(AbstractLock):
     self.lock.release()
 
 
-class Dict(AbstractBackend):
+class Backend(AbstractBackend):
   '''Test purpose backend implementation. Does not support entry expiry.'''
   
   
@@ -32,9 +32,9 @@ class Dict(AbstractBackend):
   
   
   def __init__(self, mangler):
-    super(Dict, self).__init__(mangler)
+    super(Backend, self).__init__(mangler)
     
-    self.lock  = ThreadLock(mangler)
+    self.lock  = Lock(mangler)
     self.cache = {}
   
   def save(self, key = None, value = None, mapping = None, ttl = None):
