@@ -40,6 +40,26 @@ class TestDict(test.TestCase):
     
     self.fixture.simple.invalidate('alpha', 'beta')
     self.assertEqual({}, self.unpickleCache())
+
+    
+    self.assertEqual(1,  self.fixture.calls)
+    self.assertEqual({}, self.unpickleCache())
+    
+    expected = "])]'ammag'[(tes[+}]'ateb'[ :'ahpla'{"   
+    self.assertEqual(expected, self.fixture.simple({'alpha' : ['beta']}, [{'gamma'}]))
+    self.assertEqual(2, self.fixture.calls)
+    self.assertEqual({
+      'cache:entry:Fixture:simple:1791fb72b0c00b29' : expected
+    }, self.unpickleCache())
+    
+    self.assertEqual(expected, self.fixture.simple({'alpha' : ['beta']}, [{'gamma'}]))
+    self.assertEqual(2, self.fixture.calls)
+    self.assertEqual({
+      'cache:entry:Fixture:simple:1791fb72b0c00b29' : expected
+    }, self.unpickleCache())
+    
+    self.fixture.simple.invalidate({'alpha' : ['beta']}, [{'gamma'}])
+    self.assertEqual({}, self.unpickleCache())
     
   def testTagged(self):
     self.assertEqual(0,  self.fixture.calls)
@@ -98,7 +118,6 @@ class TestDict(test.TestCase):
     self.assertEqual({}, self.unpickleCache())
 
 
-    self.testee.clean()
     self.assertEqual(0,  counter['bar'])
     self.assertEqual({}, self.unpickleCache())
     
@@ -155,23 +174,23 @@ class TestDict(test.TestCase):
     self.assertEqual(0,  self.fixture.calls)
     self.assertEqual({}, self.unpickleCache())
     
-    self.assertEqual({'a': ['alpha'], 'b': {'b': 'beta'}}, self.fixture.all('alpha', 'beta'))
+    self.assertEqual({'a': 1, 'b': {'b': 'beta'}}, self.fixture.all({'alpha' : 1}, ['beta']))
     self.assertEqual(1, self.fixture.calls)
     self.assertEqual({
       'cache:tag:a' : '0c7bcfba3c9e6726',
       'cache:tag:z' : 'faee633dd7cb041d',
-      'mk:alpha:beta:85642a5983f33b10' : {'a': ['alpha'], 'b': {'b': 'beta'}}
+      "mk:{'alpha': 1}:['beta']:85642a5983f33b10" : {'a': 1, 'b': {'b': 'beta'}}
     }, self.unpickleCache())
     
-    self.assertEqual({'a': ['alpha'], 'b': {'b': 'beta'}}, self.fixture.all('alpha', 'beta'))
+    self.assertEqual({'a': 1, 'b': {'b': 'beta'}}, self.fixture.all({'alpha' : 1}, ['beta']))
     self.assertEqual(1, self.fixture.calls)
     self.assertEqual({
       'cache:tag:a' : '0c7bcfba3c9e6726',
       'cache:tag:z' : 'faee633dd7cb041d',
-      'mk:alpha:beta:85642a5983f33b10' : {'a': ['alpha'], 'b': {'b': 'beta'}}
+      "mk:{'alpha': 1}:['beta']:85642a5983f33b10" : {'a': 1, 'b': {'b': 'beta'}}
     }, self.unpickleCache())
     
-    self.fixture.all.invalidate('alpha', 'beta')
+    self.fixture.all.invalidate({'alpha' : 1}, ['beta'])
     self.assertEqual({
       'cache:tag:a' : '0c7bcfba3c9e6726',
       'cache:tag:z' : 'faee633dd7cb041d'
@@ -270,7 +289,7 @@ class TestDict(test.TestCase):
     map(threading.Thread.start, threads)
     map(threading.Thread.join,  threads)
     
-    self.assertGreater(sum(log), 1)
+    self.assertGreater(sum(log), 1, 'dogpile')
     self.assertEqual({
       'mk:alpha:beta:85642a5983f33b10': 'apabt', 
       'cache:tag:a' : '0c7bcfba3c9e6726', 

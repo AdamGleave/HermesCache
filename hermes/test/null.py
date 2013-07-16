@@ -77,10 +77,10 @@ class TestNull(test.TestCase):
   def testAll(self):
     self.assertEqual(0, self.fixture.calls)
     
-    self.assertEqual({'a': ['alpha'], 'b': {'b': 'beta'}}, self.fixture.all('alpha', 'beta'))
+    self.assertEqual( {'a': ['beta'], 'b': {'b': 2}}, self.fixture.all({'alpha' : ['beta']}, [2]))
     self.assertEqual(1, self.fixture.calls)
     
-    self.assertEqual({'a': ['alpha'], 'b': {'b': 'beta'}}, self.fixture.all('alpha', 'beta'))
+    self.assertEqual( {'a': ['beta'], 'b': {'b': 2}}, self.fixture.all({'alpha' : ['beta']}, [2]))
     self.assertEqual(2, self.fixture.calls)
     
   def testClean(self):
