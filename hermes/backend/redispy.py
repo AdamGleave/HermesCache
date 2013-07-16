@@ -50,7 +50,7 @@ class Backend(AbstractBackend):
     })
     
     self.lock = Lock(self.mangler, self.client, **{
-      'timeout' : kwargs.get('lockTimeout', None),
+      'timeout' : kwargs.get('lockTimeout', 900),
       'sleep'   : kwargs.get('lockSleep',   0.1)
     })
   
