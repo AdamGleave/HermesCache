@@ -75,7 +75,7 @@ class Hermes(object):
   '''Default cache entry Time To Live'''
   
   
-  def __init__(self, backendClass, manglerClass = Mangler, **kwargs):
+  def __init__(self, backendClass = AbstractBackend, manglerClass = Mangler, **kwargs):
     '''Key arguments comprise of ``ttl`` and backend parameters'''
     
     self._ttl = kwargs.pop('ttl', self._ttl)
