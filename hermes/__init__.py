@@ -24,10 +24,10 @@ class Mangler(object):
   def hash(self, value):
     return hashlib.md5(value).hexdigest()[::2] # full md5 seems too long
   
-  def dump(self, value):
+  def dumps(self, value):
     return pickle.dumps(value, protocol = pickle.HIGHEST_PROTOCOL)
   
-  def load(self, value):
+  def loads(self, value):
     return pickle.loads(value)
   
   def nameEntry(self, fn, *args, **kwargs):
@@ -41,7 +41,7 @@ class Mangler(object):
       raise TypeError('Fn is expected to be insance of MethodType or FunctionType')
     
     arguments = args, tuple(sorted(kwargs.items()))  
-    result.append(self.hash(self.dump(arguments))) 
+    result.append(self.hash(self.dumps(arguments))) 
     
     return ':'.join(result)
 

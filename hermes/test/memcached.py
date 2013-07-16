@@ -8,35 +8,37 @@ import time
 import pickle
 
 import hermes.test as test
-import hermes.backend.redispy
+import hermes.backend.memcached
 
 
-class TestRedis(test.TestCase):
+class TestMemcached(test.TestCase):
   
   def setUp(self):
-    self.testee = hermes.Hermes(hermes.backend.redispy.Backend, ttl = 360, lockTimeout = 120) 
-    self.fixture = test.createFixture(self.testee) 
+    self.testee = hermes.Hermes(hermes.backend.memcached.Backend, ttl = 360) 
+    self.fixture = test.createFixture(self.testee)
     
     self.testee.clean()
     
   def tearDown(self):
     self.testee.clean()
   
+  def getSize(self):
+    return int(self.testee._backend.client.get_stats()[0][1]['curr_items'])
+  
   def testSimple(self):
     self.assertEqual(0, self.fixture.calls)
-    self.assertEqual(0, self.testee._backend.client.dbsize())
+    self.assertEqual(0, self.getSize())
 
     key = 'cache:entry:Fixture:simple:109cc9a8853ebcb1'
-    for _ in range(4):    
+    for _ in range(4):
       self.assertEqual('ateb+ahpla', self.fixture.simple('alpha', 'beta'))
       self.assertEqual(1, self.fixture.calls)
-      self.assertEqual(1, self.testee._backend.client.dbsize())
+      self.assertEqual(1, self.getSize())
   
-      self.assertEqual(360, self.testee._backend.client.ttl(key))
       self.assertEqual('ateb+ahpla', pickle.loads(self.testee._backend.client.get(key)))
     
     self.fixture.simple.invalidate('alpha', 'beta')
-    self.assertEqual(0, self.testee._backend.client.dbsize())
+    self.assertEqual(0, self.getSize())
     
     
     expected = "])]'ammag'[(tes[+}]'ateb'[ :'ahpla'{"
@@ -44,32 +46,27 @@ class TestRedis(test.TestCase):
     for _ in range(4): 
       self.assertEqual(expected, self.fixture.simple({'alpha' : ['beta']}, [{'gamma'}]))
       self.assertEqual(2, self.fixture.calls)
-      self.assertEqual(1, self.testee._backend.client.dbsize())
+      self.assertEqual(1, self.getSize())
   
-      self.assertEqual(360, self.testee._backend.client.ttl(key))
       self.assertEqual(expected, pickle.loads(self.testee._backend.client.get(key)))
     
   def testTagged(self):
     self.assertEqual(0, self.fixture.calls)
-    self.assertEqual(0, self.testee._backend.client.dbsize())
+    self.assertEqual(0, self.getSize())
     
     for _ in range(4):    
       self.assertEqual('ae-hl', self.fixture.tagged('alpha', 'beta'))
       self.assertEqual(1,       self.fixture.calls)
-      self.assertEqual(3,       self.testee._backend.client.dbsize())
+      self.assertEqual(3,       self.getSize())
       
       key = 'cache:entry:Fixture:tagged:109cc9a8853ebcb1:94ec8f95f633c623'
-      self.assertEqual(360, self.testee._backend.client.ttl(key))
-      self.assertEqual(-1,  self.testee._backend.client.ttl('cache:tag:rock'))
-      self.assertEqual(-1,  self.testee._backend.client.ttl('cache:tag:tree'))
-      
-      self.assertEqual('ae-hl', pickle.loads(self.testee._backend.client.get(key)))
+      self.assertEqual('ae-hl',            pickle.loads(self.testee._backend.client.get(key)))
       self.assertEqual('913932947ddd381a', pickle.loads(self.testee._backend.client.get('cache:tag:rock')))
       self.assertEqual('ca7c89f9acb93af3', pickle.loads(self.testee._backend.client.get('cache:tag:tree')))
     
     self.fixture.tagged.invalidate('alpha', 'beta')
-    self.assertFalse(self.testee._backend.client.exists(key))
-    self.assertEqual(2, self.testee._backend.client.dbsize())
+    self.assertIsNone(self.testee._backend.client.get(key))
+    self.assertEqual(2, self.getSize())
     
   def testFunction(self):
     counter = dict(foo = 0, bar = 0)
@@ -87,35 +84,30 @@ class TestRedis(test.TestCase):
     
     
     self.assertEqual(0, counter['foo'])
-    self.assertEqual(0, self.testee._backend.client.dbsize())
+    self.assertEqual(0, self.getSize())
     
     key = 'cache:entry:foo:109cc9a8853ebcb1'
     for _ in range(4):
       self.assertEqual('ateb+ahpla', foo('alpha', 'beta'))
       
       self.assertEqual(1, counter['foo'])
-      self.assertEqual(1, self.testee._backend.client.dbsize())
+      self.assertEqual(1, self.getSize())
 
-      self.assertEqual(360,          self.testee._backend.client.ttl(key))
       self.assertEqual('ateb+ahpla', pickle.loads(self.testee._backend.client.get(key)))
     
     foo.invalidate('alpha', 'beta')
-    self.assertFalse(self.testee._backend.client.exists(key))
-    self.assertEqual(0, self.testee._backend.client.dbsize())
+    self.assertIsNone(self.testee._backend.client.get(key))
+    self.assertEqual(0, self.getSize())
     
     
     self.assertEqual(0, counter['bar'])
-    self.assertEqual(0, self.testee._backend.client.dbsize())
+    self.assertEqual(0, self.getSize())
     
     key = 'mk:alpha:beta:85642a5983f33b10'
     for _ in range(4):
       self.assertEqual('apabt', bar('alpha', 'beta'))
       self.assertEqual(1,       counter['bar'])
-      self.assertEqual(3,       self.testee._backend.client.dbsize())
-      
-      self.assertEqual(120, self.testee._backend.client.ttl(key))
-      self.assertEqual(-1,  self.testee._backend.client.ttl('cache:tag:a'))
-      self.assertEqual(-1,  self.testee._backend.client.ttl('cache:tag:z'))
+      self.assertEqual(3,       self.getSize())
       
       self.assertEqual('apabt', pickle.loads(self.testee._backend.client.get(key)))
       self.assertEqual('0c7bcfba3c9e6726', pickle.loads(self.testee._backend.client.get('cache:tag:a')))
@@ -123,78 +115,70 @@ class TestRedis(test.TestCase):
     
     bar.invalidate('alpha', 'beta')
     self.assertEqual(1,  counter['foo'])
-    self.assertFalse(self.testee._backend.client.exists(key))
-    self.assertEqual(2, self.testee._backend.client.dbsize())
+    self.assertIsNone(self.testee._backend.client.get(key))
+    self.assertEqual(2, self.getSize())
 
   def testKey(self):
     self.assertEqual(0, self.fixture.calls)
-    self.assertEqual(0, self.testee._backend.client.dbsize())
+    self.assertEqual(0, self.getSize())
     
     key = 'mykey:alpha:beta:18af4f5a6e37713d'
     for _ in range(4):    
       self.assertEqual('apabt', self.fixture.key('alpha', 'beta'))
       self.assertEqual(1,       self.fixture.calls)
-      self.assertEqual(3,       self.testee._backend.client.dbsize())
+      self.assertEqual(3,       self.getSize())
       
-      self.assertEqual(360, self.testee._backend.client.ttl(key))
-      self.assertEqual(-1,  self.testee._backend.client.ttl('cache:tag:ash'))
-      self.assertEqual(-1,  self.testee._backend.client.ttl('cache:tag:stone'))
-      
-      self.assertEqual('apabt', pickle.loads(self.testee._backend.client.get(key)))
+      self.assertEqual('apabt',            pickle.loads(self.testee._backend.client.get(key)))
       self.assertEqual('25f9af512cf657ae', pickle.loads(self.testee._backend.client.get('cache:tag:ash')))
       self.assertEqual('080f56f33dfc865b', pickle.loads(self.testee._backend.client.get('cache:tag:stone')))
     
     self.fixture.key.invalidate('alpha', 'beta')
-    self.assertFalse(self.testee._backend.client.exists(key))
-    self.assertEqual(2, self.testee._backend.client.dbsize())
+    self.assertIsNone(self.testee._backend.client.get(key))
+    self.assertEqual(2, self.getSize())
     self.assertEqual('25f9af512cf657ae', pickle.loads(self.testee._backend.client.get('cache:tag:ash')))
     self.assertEqual('080f56f33dfc865b', pickle.loads(self.testee._backend.client.get('cache:tag:stone')))
     
   def testAll(self):
     self.assertEqual(0, self.fixture.calls)
-    self.assertEqual(0, self.testee._backend.client.dbsize())
+    self.assertEqual(0, self.getSize())
     
     key = "mk:{'alpha':1}:['beta']:85642a5983f33b10"
     for _ in range(4):    
       self.assertEqual({'a': 1, 'b': {'b': 'beta'}}, self.fixture.all({'alpha' : 1}, ['beta']))
       self.assertEqual(1, self.fixture.calls)
-      self.assertEqual(3, self.testee._backend.client.dbsize())
-      
-      self.assertEqual(1200, self.testee._backend.client.ttl(key))
-      self.assertEqual(-1,   self.testee._backend.client.ttl('cache:tag:a'))
-      self.assertEqual(-1,   self.testee._backend.client.ttl('cache:tag:z'))
+      self.assertEqual(3, self.getSize())
       
       self.assertEqual({'a': 1, 'b': {'b': 'beta'}}, pickle.loads(self.testee._backend.client.get(key)))
       self.assertEqual('0c7bcfba3c9e6726', pickle.loads(self.testee._backend.client.get('cache:tag:a')))
       self.assertEqual('faee633dd7cb041d', pickle.loads(self.testee._backend.client.get('cache:tag:z')))
       
     self.fixture.all.invalidate({'alpha' : 1}, ['beta'])
-    self.assertEqual(2, self.testee._backend.client.dbsize())
+    self.assertEqual(2, self.getSize())
     self.assertEqual('0c7bcfba3c9e6726', pickle.loads(self.testee._backend.client.get('cache:tag:a')))
     self.assertEqual('faee633dd7cb041d', pickle.loads(self.testee._backend.client.get('cache:tag:z')))
   
   def testClean(self):
     self.assertEqual(0, self.fixture.calls)
-    self.assertEqual(0, self.testee._backend.client.dbsize())
+    self.assertEqual(0, self.getSize())
     
     self.assertEqual('ateb+ahpla', self.fixture.simple('alpha', 'beta'))
     self.assertEqual('aldamg',     self.fixture.tagged('gamma', 'delta'))
     self.assertEqual(2,            self.fixture.calls)
-    self.assertEqual(4,            self.testee._backend.client.dbsize())
+    self.assertEqual(4,            self.getSize())
     
     self.testee.clean()
     
-    self.assertEqual(2,  self.fixture.calls)
-    self.assertEqual(0, self.testee._backend.client.dbsize())
+    self.assertEqual(2, self.fixture.calls)
+    self.assertEqual(0, self.getSize())
     
   def testCleanTagged(self):
     self.assertEqual(0, self.fixture.calls)
-    self.assertEqual(0, self.testee._backend.client.dbsize())
+    self.assertEqual(0, self.getSize())
     
     self.assertEqual('ateb+ahpla', self.fixture.simple('alpha', 'beta'))
     self.assertEqual('aldamg',     self.fixture.tagged('gamma', 'delta'))
     self.assertEqual(2,            self.fixture.calls)
-    self.assertEqual(4,            self.testee._backend.client.dbsize())
+    self.assertEqual(4,            self.getSize())
 
     key = 'cache:entry:Fixture:simple:109cc9a8853ebcb1'
     self.assertEqual('ateb+ahpla', pickle.loads(self.testee._backend.client.get(key)))
@@ -206,7 +190,7 @@ class TestRedis(test.TestCase):
     
     
     self.testee.clean(('rock',))
-    self.assertEqual(3, self.testee._backend.client.dbsize())
+    self.assertEqual(3, self.getSize())
     
     key = 'cache:entry:Fixture:simple:109cc9a8853ebcb1'
     self.assertEqual('ateb+ahpla', pickle.loads(self.testee._backend.client.get(key)))
@@ -219,7 +203,7 @@ class TestRedis(test.TestCase):
     self.assertEqual('ateb+ahpla', self.fixture.simple('alpha', 'beta'))
     self.assertEqual('aldamg',     self.fixture.tagged('gamma', 'delta'))
     self.assertEqual(3,            self.fixture.calls)
-    self.assertEqual(4,            self.testee._backend.client.dbsize())
+    self.assertEqual(4,            self.getSize())
     
     key = 'cache:entry:Fixture:simple:109cc9a8853ebcb1'
     self.assertEqual('ateb+ahpla', pickle.loads(self.testee._backend.client.get(key)))
@@ -231,7 +215,7 @@ class TestRedis(test.TestCase):
     
     
     self.testee.clean(('rock', 'tree'))
-    self.assertEqual(2, self.testee._backend.client.dbsize())
+    self.assertEqual(2, self.getSize())
 
     key = 'cache:entry:Fixture:simple:109cc9a8853ebcb1'
     self.assertEqual('ateb+ahpla', pickle.loads(self.testee._backend.client.get(key)))
@@ -242,7 +226,7 @@ class TestRedis(test.TestCase):
     self.assertEqual('ateb+ahpla', self.fixture.simple('alpha', 'beta'))
     self.assertEqual('aldamg',     self.fixture.tagged('gamma', 'delta'))
     self.assertEqual(4,            self.fixture.calls)
-    self.assertEqual(4,            self.testee._backend.client.dbsize())
+    self.assertEqual(4,            self.getSize())
     
     key = 'cache:entry:Fixture:simple:109cc9a8853ebcb1'
     self.assertEqual('ateb+ahpla', pickle.loads(self.testee._backend.client.get(key)))
@@ -253,7 +237,7 @@ class TestRedis(test.TestCase):
     self.assertEqual('ca7c89f9acb93af3', pickle.loads(self.testee._backend.client.get('cache:tag:tree')))
     
     self.testee.clean()
-    self.assertEqual(0, self.testee._backend.client.dbsize())
+    self.assertEqual(0, self.getSize())
     
   def testConcurrent(self):
     log = []
@@ -274,7 +258,7 @@ class TestRedis(test.TestCase):
     self.assertEqual('apabt',            pickle.loads(self.testee._backend.client.get(key)))
     self.assertEqual('0c7bcfba3c9e6726', pickle.loads(self.testee._backend.client.get('cache:tag:a')))
     self.assertEqual('faee633dd7cb041d', pickle.loads(self.testee._backend.client.get('cache:tag:z')))
-    self.assertEqual(3, self.testee._backend.client.dbsize())
+    self.assertEqual(3, self.getSize())
     
     del log[:]
     self.testee.clean()
@@ -290,21 +274,21 @@ class TestRedis(test.TestCase):
     self.assertEqual('apabt',            pickle.loads(self.testee._backend.client.get(key)))
     self.assertEqual('0c7bcfba3c9e6726', pickle.loads(self.testee._backend.client.get('cache:tag:a')))
     self.assertEqual('faee633dd7cb041d', pickle.loads(self.testee._backend.client.get('cache:tag:z')))
-    self.assertEqual(3, self.testee._backend.client.dbsize())
+    self.assertEqual(3, self.getSize())
 
 
-class TestRedisLock(test.TestCase):
+class TestMemcachedLock(test.TestCase):
   
   def setUp(self):
-    cache       = hermes.Hermes(hermes.backend.redispy.Backend) 
-    self.testee = hermes.backend.redispy.Lock(cache._backend.mangler, cache._backend.client)
+    cache       = hermes.Hermes(hermes.backend.memcached.Backend) 
+    self.testee = hermes.backend.memcached.Lock(cache._backend.mangler, cache._backend.client)
   
   def testAcquire(self):
     for _ in range(2):
       try:
         self.assertTrue(self.testee.acquire(True))
         self.assertFalse(self.testee.acquire(False))
-        self.assertEqual('cache:lock:default', self.testee.lock.name)
+        self.assertEqual('cache:lock:default', self.testee.key)
       finally:
         self.testee.release()
 
@@ -313,14 +297,14 @@ class TestRedisLock(test.TestCase):
       try:
         self.assertTrue(self.testee.acquire(True))
         self.assertFalse(self.testee.acquire(False))
-        self.assertEqual('cache:lock:default', self.testee.lock.name)
+        self.assertEqual('cache:lock:default', self.testee.key)
       finally:
         self.testee.release()
     
   def testWith(self):
     with self.testee('some:key'):
       self.assertFalse(self.testee.acquire(False))
-      self.assertEqual('cache:lock:some:key', self.testee.lock.name)
+      self.assertEqual('cache:lock:some:key', self.testee.key)
       
   def testConcurrent(self):
     log   = []

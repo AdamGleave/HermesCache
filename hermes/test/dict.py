@@ -147,7 +147,7 @@ class TestDict(test.TestCase):
       self.assertEqual({
         'cache:tag:a' : '0c7bcfba3c9e6726',
         'cache:tag:z' : 'faee633dd7cb041d',
-        "mk:{'alpha': 1}:['beta']:85642a5983f33b10" : {'a': 1, 'b': {'b': 'beta'}}
+        "mk:{'alpha':1}:['beta']:85642a5983f33b10" : {'a': 1, 'b': {'b': 'beta'}}
       }, self.unpickleCache())
     
     self.fixture.all.invalidate({'alpha' : 1}, ['beta'])
@@ -308,10 +308,10 @@ class CustomMangler(hermes.Mangler):
   def hash(self, value):
     return str(hash(value))
   
-  def dump(self, value):
+  def dumps(self, value):
     return json.dumps(value)
   
-  def load(self, value):
+  def loads(self, value):
     return json.loads(value)
   
 
@@ -450,7 +450,7 @@ class TestDictCustomMangler(TestDict):
       self.assertEqual({
         'hermes:tag:a' : '-468864544',
         'hermes:tag:z' : '-1563822213',
-        "mk:{'alpha': 1}:['beta']:952232102" : {'a': 1, 'b': {'b': 'beta'}}
+        "mk:{'alpha':1}:['beta']:952232102" : {'a': 1, 'b': {'b': 'beta'}}
       }, self.unpickleCache())
     
     self.fixture.all.invalidate({'alpha' : 1}, ['beta'])

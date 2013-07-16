@@ -50,7 +50,7 @@ def createFixture(cache):
       self.calls += 1
       return '{0}*{1}'.format(a, b)[::2]
     
-    @cache(tags = ('a', 'z'), key = lambda fn, *args, **kwargs: 'mk:{0}:{1}'.format(*args[1:]), ttl = 1200)
+    @cache(tags = ('a', 'z'), key = lambda fn, *a: 'mk:{0}:{1}'.format(*a[1:]).replace(' ', ''), ttl = 1200)
     def all(self, a, b):
       self.calls += 1
       return {'a' : a['alpha'], 'b' : {'b' : b[0]}}

@@ -41,16 +41,16 @@ class Backend(AbstractBackend):
     if not mapping:
       mapping = {key : value}
 
-    self.cache.update({k : self.mangler.dump(v) for k, v in mapping.items()})
+    self.cache.update({k : self.mangler.dumps(v) for k, v in mapping.items()})
   
   def load(self, keys):
     if self._isScalar(keys):
       value = self.cache.get(keys, None)
       if value is not None:
-        value = self.mangler.load(value)
+        value = self.mangler.loads(value)
       return value
     else:
-      return {k : self.mangler.load(self.cache[k]) for k in keys if k in self.cache}
+      return {k : self.mangler.loads(self.cache[k]) for k in keys if k in self.cache}
   
   def remove(self, keys):
     if self._isScalar(keys):
