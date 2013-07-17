@@ -8,6 +8,9 @@ import threading
 from . import AbstractBackend, AbstractLock
 
 
+__all__ = 'Lock', 'Backend'
+
+
 class Lock(AbstractLock):
   '''Key-unaware thread lock'''
   

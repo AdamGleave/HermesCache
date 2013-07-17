@@ -76,7 +76,32 @@ class Hermes(object):
   
   
   def __init__(self, backendClass = AbstractBackend, manglerClass = Mangler, **kwargs):
-    '''Key arguments comprise of ``ttl`` and backend parameters'''
+    '''Creates a cache decorator factory. Usage: ::
+    
+      import hermes.backend.redis
+    
+      cache = hermes.Hermes(hermes.backend.redis.Backend, ttl = 600)
+      
+      @cache
+      def foo(a, b):
+        return a * b
+        
+      @cache(tags = ('math', 'power'), ttl = 1200)
+      def bar(a, b):
+        return a ** b
+        
+      print foo(2, 333)
+      print bar(2, 10)
+      
+      foo.invalidate(2, 333)
+      bar.invalidate(2, 10)
+      
+      cache.clean(['math', 'power'])
+      
+    Positional agruments are backend class and mangler class. If ommited noop-backend
+    and built-in mangler will be be used.
+    
+    Keyword arguments comprise of ``ttl`` and backend parameters'''
     
     self._ttl = kwargs.pop('ttl', self._ttl)
     
@@ -193,7 +218,7 @@ class Cached(object):
   def __get__(self, instance, owner):
     '''Implements descriptor protocol'''
     
-    # This happens only when instance method decorated, so we can
+    # This happens only when instance method is decorated, so we can
     # surely distinguish between decorated ``types.MethodType`` and
     # ``types.FunctionType``. Python class declaration mechanics prevent 
     # a decorator from having awareness of the class type, as the 
@@ -202,7 +227,7 @@ class Cached(object):
     self._callable = types.MethodType(self._fn, instance, owner)
     
     # Intance can also be calculated through self._callable.__self__, 
-    # however I find the following way more convinient.
+    # however the following is more convinient.
     result            = functools.partial(self.__call__,   instance)
     result.invalidate = functools.partial(self.invalidate, instance)
     

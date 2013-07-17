@@ -9,6 +9,9 @@ redis = importlib.import_module('redis')
 from . import AbstractBackend, AbstractLock
 
 
+__all__ = 'Lock', 'Backend'
+
+
 class Lock(AbstractLock):
   '''Key-aware distrubuted lock'''
   
