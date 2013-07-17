@@ -5,8 +5,13 @@
 
 import types
 import hashlib
-import cPickle as pickle
 import functools
+import os
+
+try:
+  import cPickle as pickle
+except ImportError:
+  import pickle
 
 from backend import AbstractBackend
 
@@ -48,8 +53,8 @@ class Mangler(object):
   def nameTag(self, tag):
     return u':'.join([self.prefix, 'tag', tag]) 
 
-  def mapTags(self, tags):
-    return {self.nameTag(tag) : self.hash(tag) for tag in tags}
+  def mapTags(self, tagKeys):
+    return {key : self.hash(u':'.join((key, os.urandom(4).encode('hex')))) for key in tagKeys}
 
   def hashTags(self, tagMap):
     values = map(lambda (k, v): v, sorted(tagMap.items()))
@@ -59,7 +64,7 @@ class Mangler(object):
     parts = entryKey.split(':')
     if parts[0] == self.prefix:
       entryKey = ':'.join(parts[2:]) 
-    return u':'.join([self.prefix, 'lock', entryKey])
+    return ':'.join([self.prefix, 'lock', entryKey])
 
 
 class Hermes(object):
@@ -185,8 +190,15 @@ class Cached(object):
   
   def _save(self, key, value):
     if self._tags:
-      tagMap = self._mangler.mapTags(self._tags)
-      self._backend.save(mapping = tagMap, ttl = None)
+      namedTags   = map(self._mangler.nameTag, self._tags)
+      tagMap      = self._backend.load(namedTags)
+      missingTags = set(namedTags) - set(tagMap.keys())
+      if missingTags:
+        missingTagMap = self._mangler.mapTags(missingTags)
+        self._backend.save(mapping = missingTagMap, ttl = None)
+        tagMap.update(missingTagMap)
+        assert len(self._tags) == len(tagMap) 
+        
       key += ':' + self._mangler.hashTags(tagMap)
       
     return self._backend.save(key, value, ttl = self._ttl)

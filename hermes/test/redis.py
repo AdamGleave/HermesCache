@@ -71,6 +71,41 @@ class TestRedis(test.TestCase):
     self.assertFalse(self.testee._backend.client.exists(key))
     self.assertEqual(2, self.testee._backend.client.dbsize())
     
+    self.assertEqual(2, self.getSize())
+    
+    rockTag = pickle.loads(self.testee._backend.client.get('cache:tag:rock'))
+    treeTag = pickle.loads(self.testee._backend.client.get('cache:tag:tree'))
+    self.assertNotEqual(rockTag, treeTag)
+    self.assertEqual(16, len(rockTag))
+    self.assertEqual(16, len(treeTag))
+    
+    for _ in range(4):
+      self.assertEqual('ae-hl', self.fixture.tagged('alpha', 'beta'))
+      self.assertEqual('ae%hl', self.fixture.tagged2('alpha', 'beta'))
+      self.assertEqual(3, self.fixture.calls)
+      
+      self.assertEqual(5, self.getSize())
+      self.assertEqual(rockTag, pickle.loads(self.testee._backend.client.get('cache:tag:rock')))
+      self.assertEqual(treeTag, pickle.loads(self.testee._backend.client.get('cache:tag:tree')))
+      self.assertEqual(16, len(pickle.loads(self.testee._backend.client.get('cache:tag:ice'))))
+      
+    self.testee.clean(['rock'])
+    
+    self.assertEqual(4, self.getSize())
+    self.assertIsNone(self.testee._backend.client.get('cache:tag:rock'))
+    iceTag = pickle.loads(self.testee._backend.client.get('cache:tag:ice'))
+    
+    for _ in range(4):
+      self.assertEqual('ae-hl', self.fixture.tagged('alpha', 'beta'))
+      self.assertEqual('ae%hl', self.fixture.tagged2('alpha', 'beta'))
+      self.assertEqual(5, self.fixture.calls)
+      
+      self.assertEqual(7,  self.getSize(), 'has new and old entries for tagged and tagged 2 + 3 tags')
+      self.assertEqual(treeTag, pickle.loads(self.testee._backend.client.get('cache:tag:tree')))
+      self.assertEqual(iceTag, pickle.loads(self.testee._backend.client.get('cache:tag:ice')))
+      self.assertEqual(16, len(pickle.loads(self.testee._backend.client.get('cache:tag:rock'))))
+      self.assertNotEqual(rockTag, pickle.loads(self.testee._backend.client.get('cache:tag:rock')))
+    
   def testFunction(self):
     counter = dict(foo = 0, bar = 0)
     

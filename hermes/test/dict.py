@@ -59,17 +59,56 @@ class TestDict(test.TestCase):
     for _ in range(4):
       self.assertEqual('ae-hl', self.fixture.tagged('alpha', 'beta'))
       self.assertEqual(1,       self.fixture.calls)
-      self.assertEqual({
-        'cache:entry:Fixture:tagged:109cc9a8853ebcb1:94ec8f95f633c623' : 'ae-hl',
-        'cache:tag:rock' : '913932947ddd381a',
-        'cache:tag:tree' : 'ca7c89f9acb93af3'
-      }, self.unpickleCache())
+      
+      cache = self.unpickleCache()
+      self.assertEqual(3, len(cache))
+      self.assertEqual(16, len(cache.pop('cache:tag:rock')))
+      self.assertEqual(16, len(cache.pop('cache:tag:tree')))
+      
+      expected = 'cache:entry:Fixture:tagged:109cc9a8853ebcb1'
+      self.assertEqual(expected, ':'.join(cache.keys()[0].split(':')[:-1]))
+      self.assertEqual('ae-hl', cache.values()[0])
+    
     
     self.fixture.tagged.invalidate('alpha', 'beta')
-    self.assertEqual({
-      'cache:tag:rock' : '913932947ddd381a',
-      'cache:tag:tree' : 'ca7c89f9acb93af3'
-    }, self.unpickleCache())
+    
+    cache = self.unpickleCache()
+    self.assertEqual(2, len(cache))
+    rockTag = cache.get('cache:tag:rock')
+    treeTag = cache.get('cache:tag:tree')
+    self.assertNotEqual(rockTag, treeTag)
+    self.assertEqual(16, len(rockTag))
+    self.assertEqual(16, len(treeTag))
+    
+    for _ in range(4):
+      self.assertEqual('ae-hl', self.fixture.tagged('alpha', 'beta'))
+      self.assertEqual('ae%hl', self.fixture.tagged2('alpha', 'beta'))
+      self.assertEqual(3, self.fixture.calls)
+      
+      cache = self.unpickleCache()
+      self.assertEqual(5,  len(cache))
+      self.assertEqual(rockTag, cache.get('cache:tag:rock'))
+      self.assertEqual(treeTag, cache.get('cache:tag:tree'))
+      self.assertEqual(16, len(cache.get('cache:tag:ice')))
+      
+    self.testee.clean(['rock'])
+    
+    cache = self.unpickleCache()
+    self.assertEqual(4, len(cache))
+    self.assertTrue('cache:tag:rock' not in cache)
+    iceTag = cache.get('cache:tag:ice')
+    
+    for _ in range(4):
+      self.assertEqual('ae-hl', self.fixture.tagged('alpha', 'beta'))
+      self.assertEqual('ae%hl', self.fixture.tagged2('alpha', 'beta'))
+      self.assertEqual(5, self.fixture.calls)
+      
+      cache = self.unpickleCache()
+      self.assertEqual(7,  len(cache), 'has new and old entries for tagged and tagged 2 + 3 tags')
+      self.assertEqual(treeTag, cache.get('cache:tag:tree'))
+      self.assertEqual(iceTag,  cache.get('cache:tag:ice'))
+      self.assertEqual(16, len(cache.get('cache:tag:rock')))
+      self.assertNotEqual(rockTag, cache.get('cache:tag:rock'))
     
   def testFunction(self):
     counter = dict(foo = 0, bar = 0)
@@ -105,18 +144,23 @@ class TestDict(test.TestCase):
     for _ in range(4):
       self.assertEqual('apabt', bar('alpha', 'beta'))
       self.assertEqual(1,       counter['bar'])
-      self.assertEqual({
-        'cache:tag:a' : '0c7bcfba3c9e6726',
-        'cache:tag:z' : 'faee633dd7cb041d',
-        'mk:alpha:beta:85642a5983f33b10' : 'apabt'
-      }, self.unpickleCache())
+      
+      cache = self.unpickleCache()
+      self.assertEqual(3,  len(cache))
+      self.assertEqual(16, len(cache.pop('cache:tag:a')))
+      self.assertEqual(16, len(cache.pop('cache:tag:z')))
+      
+      expected = 'mk:alpha:beta'
+      self.assertEqual(expected, ':'.join(cache.keys()[0].split(':')[:-1]))
+      self.assertEqual('apabt', cache.values()[0])
     
     bar.invalidate('alpha', 'beta')
-    self.assertEqual(1,  counter['foo'])
-    self.assertEqual({
-      'cache:tag:a' : '0c7bcfba3c9e6726',
-      'cache:tag:z' : 'faee633dd7cb041d'
-    }, self.unpickleCache())
+    self.assertEqual(1, counter['foo'])
+    
+    cache = self.unpickleCache()
+    self.assertEqual(2,  len(cache))
+    self.assertEqual(16, len(cache.pop('cache:tag:a')))
+    self.assertEqual(16, len(cache.pop('cache:tag:z')))
 
   def testKey(self):
     self.assertEqual(0,  self.fixture.calls)
@@ -125,17 +169,22 @@ class TestDict(test.TestCase):
     for _ in range(4):
       self.assertEqual('apabt', self.fixture.key('alpha', 'beta'))
       self.assertEqual(1,       self.fixture.calls)
-      self.assertEqual({
-        'cache:tag:ash'   : '25f9af512cf657ae',
-        'cache:tag:stone' : '080f56f33dfc865b',
-        'mykey:alpha:beta:18af4f5a6e37713d' : 'apabt'
-      }, self.unpickleCache())
+      
+      cache = self.unpickleCache()
+      self.assertEqual(3,  len(cache))
+      self.assertEqual(16, len(cache.pop('cache:tag:ash')))
+      self.assertEqual(16, len(cache.pop('cache:tag:stone')))
+      
+      expected = 'mykey:alpha:beta'
+      self.assertEqual(expected, ':'.join(cache.keys()[0].split(':')[:-1]))
+      self.assertEqual('apabt', cache.values()[0])
     
     self.fixture.key.invalidate('alpha', 'beta')
-    self.assertEqual({
-      'cache:tag:ash'   : '25f9af512cf657ae',
-      'cache:tag:stone' : '080f56f33dfc865b'
-    }, self.unpickleCache())
+    
+    cache = self.unpickleCache()
+    self.assertEqual(2,  len(cache))
+    self.assertEqual(16, len(cache.pop('cache:tag:ash')))
+    self.assertEqual(16, len(cache.pop('cache:tag:stone')))
     
   def testAll(self):
     self.assertEqual(0,  self.fixture.calls)
@@ -144,17 +193,22 @@ class TestDict(test.TestCase):
     for _ in range(4):
       self.assertEqual({'a': 1, 'b': {'b': 'beta'}}, self.fixture.all({'alpha' : 1}, ['beta']))
       self.assertEqual(1, self.fixture.calls)
-      self.assertEqual({
-        'cache:tag:a' : '0c7bcfba3c9e6726',
-        'cache:tag:z' : 'faee633dd7cb041d',
-        "mk:{'alpha':1}:['beta']:85642a5983f33b10" : {'a': 1, 'b': {'b': 'beta'}}
-      }, self.unpickleCache())
+      
+      cache = self.unpickleCache()
+      self.assertEqual(3, len(cache))
+      self.assertEqual(16, len(cache.pop('cache:tag:a')))
+      self.assertEqual(16, len(cache.pop('cache:tag:z')))
+      
+      expected = "mk:{'alpha':1}:['beta']"
+      self.assertEqual(expected, ':'.join(cache.keys()[0].split(':')[:-1]))
+      self.assertEqual({'a': 1, 'b': {'b': 'beta'}}, cache.values()[0])
     
     self.fixture.all.invalidate({'alpha' : 1}, ['beta'])
-    self.assertEqual({
-      'cache:tag:a' : '0c7bcfba3c9e6726',
-      'cache:tag:z' : 'faee633dd7cb041d'
-    }, self.unpickleCache())
+    
+    cache = self.unpickleCache()
+    self.assertEqual(2,  len(cache))
+    self.assertEqual(16, len(cache.pop('cache:tag:a')))
+    self.assertEqual(16, len(cache.pop('cache:tag:z')))
   
   def testClean(self):
     self.assertEqual(0,  self.fixture.calls)
@@ -176,45 +230,73 @@ class TestDict(test.TestCase):
     self.assertEqual('ateb+ahpla', self.fixture.simple('alpha', 'beta'))
     self.assertEqual('aldamg',     self.fixture.tagged('gamma', 'delta'))
     self.assertEqual(2,            self.fixture.calls)
-    self.assertEqual({
-      'cache:entry:Fixture:simple:109cc9a8853ebcb1'                  : 'ateb+ahpla',
-      'cache:entry:Fixture:tagged:57f6833d90ca8fcb:94ec8f95f633c623' : 'aldamg',
-      'cache:tag:rock' : '913932947ddd381a',
-      'cache:tag:tree' : 'ca7c89f9acb93af3'
-    }, self.unpickleCache())
+    
+    cache = self.unpickleCache()
+    self.assertEqual(4, len(cache))
+    self.assertEqual('ateb+ahpla', cache['cache:entry:Fixture:simple:109cc9a8853ebcb1'])
+    self.assertEqual(16, len(cache.pop('cache:tag:rock')))
+    self.assertEqual(16, len(cache.pop('cache:tag:tree')))
+    
+    expected = 'cache:entry:Fixture:tagged:57f6833d90ca8fcb'
+    self.assertEqual(expected, ':'.join(cache.keys()[0].split(':')[:-1]))
+    self.assertEqual('aldamg', cache.values()[0])
+    
     
     self.testee.clean(('rock',))
-    self.assertEqual({
-      'cache:entry:Fixture:simple:109cc9a8853ebcb1'                  : 'ateb+ahpla',
-      'cache:entry:Fixture:tagged:57f6833d90ca8fcb:94ec8f95f633c623' : 'aldamg',
-      'cache:tag:tree' : 'ca7c89f9acb93af3'
-    }, self.unpickleCache())
+    
+    cache = self.unpickleCache()
+    self.assertEqual(3, len(cache))
+    self.assertEqual('ateb+ahpla', cache['cache:entry:Fixture:simple:109cc9a8853ebcb1'])
+    self.assertEqual(16, len(cache.pop('cache:tag:tree')))
+    self.assertFalse('cache:tag:rock' in cache)
+    
+    expected = 'cache:entry:Fixture:tagged:57f6833d90ca8fcb'
+    self.assertEqual(expected, ':'.join(cache.keys()[0].split(':')[:-1]))
+    self.assertEqual('aldamg', cache.values()[0])
+
     
     self.assertEqual('ateb+ahpla', self.fixture.simple('alpha', 'beta'))
     self.assertEqual('aldamg',     self.fixture.tagged('gamma', 'delta'))
     self.assertEqual(3,            self.fixture.calls)
-    self.assertEqual({
-      'cache:entry:Fixture:simple:109cc9a8853ebcb1'                  : 'ateb+ahpla',
-      'cache:entry:Fixture:tagged:57f6833d90ca8fcb:94ec8f95f633c623' : 'aldamg',
-      'cache:tag:rock' : '913932947ddd381a',
-      'cache:tag:tree' : 'ca7c89f9acb93af3'
-    }, self.unpickleCache())
+    
+    cache = self.unpickleCache()
+    self.assertEqual(5, len(cache), '+1 old tagged entry')
+    self.assertEqual('ateb+ahpla', cache['cache:entry:Fixture:simple:109cc9a8853ebcb1'])
+    self.assertEqual(16, len(cache.pop('cache:tag:rock')))
+    self.assertEqual(16, len(cache.pop('cache:tag:tree')))
+    
+    expected = 'cache:entry:Fixture:tagged:57f6833d90ca8fcb'
+    self.assertEqual(expected, ':'.join(cache.keys()[0].split(':')[:-1]))
+    self.assertEqual('aldamg', cache.values()[0])
+    
     
     self.testee.clean(('rock', 'tree'))
-    self.assertEqual({
-      'cache:entry:Fixture:simple:109cc9a8853ebcb1'                  : 'ateb+ahpla',
-      'cache:entry:Fixture:tagged:57f6833d90ca8fcb:94ec8f95f633c623' : 'aldamg'
-    }, self.unpickleCache())
+    
+    cache = self.unpickleCache()
+    self.assertEqual(3, len(cache))
+    self.assertEqual('ateb+ahpla', cache['cache:entry:Fixture:simple:109cc9a8853ebcb1'])
+    self.assertFalse('cache:tag:tree' in cache)
+    self.assertFalse('cache:tag:rock' in cache)
+    
+    expected = 'cache:entry:Fixture:tagged:57f6833d90ca8fcb'
+    self.assertEqual(expected, ':'.join(cache.keys()[0].split(':')[:-1]))
+    self.assertEqual('aldamg', cache.values()[0])
+    
     
     self.assertEqual('ateb+ahpla', self.fixture.simple('alpha', 'beta'))
     self.assertEqual('aldamg',     self.fixture.tagged('gamma', 'delta'))
     self.assertEqual(4,            self.fixture.calls)
-    self.assertEqual({
-      'cache:entry:Fixture:simple:109cc9a8853ebcb1'                  : 'ateb+ahpla',
-      'cache:entry:Fixture:tagged:57f6833d90ca8fcb:94ec8f95f633c623' : 'aldamg',
-      'cache:tag:rock' : '913932947ddd381a',
-      'cache:tag:tree' : 'ca7c89f9acb93af3'
-    }, self.unpickleCache())
+    
+    cache = self.unpickleCache()
+    self.assertEqual(6, len(cache), '+2 old tagged entries')
+    self.assertEqual('ateb+ahpla', cache['cache:entry:Fixture:simple:109cc9a8853ebcb1'])
+    self.assertEqual(16, len(cache.pop('cache:tag:rock')))
+    self.assertEqual(16, len(cache.pop('cache:tag:tree')))
+    
+    expected = 'cache:entry:Fixture:tagged:57f6833d90ca8fcb'
+    self.assertEqual(expected, ':'.join(cache.keys()[0].split(':')[:-1]))
+    self.assertEqual('aldamg', cache.values()[0])
+    
     
     self.testee.clean()
     
@@ -235,11 +317,13 @@ class TestDict(test.TestCase):
     map(threading.Thread.join,  threads)
     
     self.assertEqual(1, sum(log))
-    self.assertEqual({
-      'mk:alpha:beta:85642a5983f33b10' : 'apabt', 
-      'cache:tag:a' : '0c7bcfba3c9e6726', 
-      'cache:tag:z' : 'faee633dd7cb041d'
-    }, self.unpickleCache())
+    
+    cache = self.unpickleCache()
+    self.assertEqual(16, len(cache.pop('cache:tag:a')))
+    self.assertEqual(16, len(cache.pop('cache:tag:z')))
+    
+    self.assertEqual('mk:alpha:beta', ':'.join(cache.keys()[0].split(':')[:-1]))
+    self.assertEqual('apabt', cache.values()[0])
     
     del log[:]
     self.testee.clean()
@@ -250,11 +334,13 @@ class TestDict(test.TestCase):
     map(threading.Thread.join,  threads)
     
     self.assertGreater(sum(log), 1, 'dogpile')
-    self.assertEqual({
-      'mk:alpha:beta:85642a5983f33b10': 'apabt', 
-      'cache:tag:a' : '0c7bcfba3c9e6726', 
-      'cache:tag:z': 'faee633dd7cb041d'
-    }, self.unpickleCache())
+    
+    cache = self.unpickleCache()
+    self.assertEqual(16, len(cache.pop('cache:tag:a')))
+    self.assertEqual(16, len(cache.pop('cache:tag:z')))
+    
+    self.assertEqual('mk:alpha:beta', ':'.join(cache.keys()[0].split(':')[:-1]))
+    self.assertEqual('apabt', cache.values()[0])
 
 
 class TestDictLock(test.TestCase):
@@ -362,17 +448,56 @@ class TestDictCustomMangler(TestDict):
     for _ in range(4):
       self.assertEqual('ae-hl', self.fixture.tagged('alpha', 'beta'))
       self.assertEqual(1,       self.fixture.calls)
-      self.assertEqual({
-        'hermes:entry:Fixture:tagged:-1830972859:1557816737' : 'ae-hl',
-        'hermes:tag:rock' : '337463927',
-        'hermes:tag:tree' : '837616492'
-      }, self.unpickleCache())
+      
+      cache = self.unpickleCache()
+      self.assertTrue(3, len(cache))
+      self.assertFalse(cache.get('hermes:tag:tree') == cache.get('hermes:tag:rock'))
+      self.assertTrue(int(cache.pop('hermes:tag:rock')) != 0)
+      self.assertTrue(int(cache.pop('hermes:tag:tree')) != 0)
+      
+      expected = 'hermes:entry:Fixture:tagged:-1830972859'
+      self.assertEqual(expected, ':'.join(cache.keys()[0].split(':')[:-1]))
+      self.assertEqual('ae-hl', cache.values()[0])
     
     self.fixture.tagged.invalidate('alpha', 'beta')
-    self.assertEqual({
-      'hermes:tag:rock' : '337463927',
-      'hermes:tag:tree' : '837616492'
-    }, self.unpickleCache())
+    
+    cache = self.unpickleCache()
+    self.assertEqual(2, len(cache))
+    rockTag = cache.get('hermes:tag:rock')
+    treeTag = cache.get('hermes:tag:tree')
+    self.assertNotEqual(rockTag, treeTag)
+    self.assertTrue(int(rockTag) != 0)
+    self.assertTrue(int(treeTag) != 0)
+    
+    for _ in range(4):
+      self.assertEqual('ae-hl', self.fixture.tagged('alpha', 'beta'))
+      self.assertEqual('ae%hl', self.fixture.tagged2('alpha', 'beta'))
+      self.assertEqual(3, self.fixture.calls)
+      
+      cache = self.unpickleCache()
+      self.assertEqual(5,  len(cache))
+      self.assertEqual(rockTag, cache.get('hermes:tag:rock'))
+      self.assertEqual(treeTag, cache.get('hermes:tag:tree'))
+      self.assertTrue(int(cache.get('hermes:tag:ice')) != 0)
+      
+    self.testee.clean(['rock'])
+    
+    cache = self.unpickleCache()
+    self.assertEqual(4, len(cache))
+    self.assertTrue('hermes:tag:rock' not in cache)
+    iceTag = cache.get('hermes:tag:ice')
+    
+    for _ in range(4):
+      self.assertEqual('ae-hl', self.fixture.tagged('alpha', 'beta'))
+      self.assertEqual('ae%hl', self.fixture.tagged2('alpha', 'beta'))
+      self.assertEqual(5, self.fixture.calls)
+      
+      cache = self.unpickleCache()
+      self.assertEqual(7,  len(cache), 'has new and old entries for tagged and tagged 2 + 3 tags')
+      self.assertEqual(treeTag, cache.get('hermes:tag:tree'))
+      self.assertEqual(iceTag,  cache.get('hermes:tag:ice'))
+      self.assertTrue(int(cache.get('hermes:tag:rock')) != 0)
+      self.assertNotEqual(rockTag, cache.get('hermes:tag:rock'))
     
   def testFunction(self):
     counter = dict(foo = 0, bar = 0)
@@ -408,18 +533,24 @@ class TestDictCustomMangler(TestDict):
     for _ in range(4):
       self.assertEqual('apabt', bar('alpha', 'beta'))
       self.assertEqual(1,       counter['bar'])
-      self.assertEqual({
-        'hermes:tag:a' : '-468864544',
-        'hermes:tag:z' : '-1563822213',
-        'mk:alpha:beta:952232102' : 'apabt'
-      }, self.unpickleCache())
+      
+      cache = self.unpickleCache()
+      self.assertTrue(cache.get('hermes:tag:a') != cache.get('hermes:tag:z'))
+      self.assertTrue(int(cache.pop('hermes:tag:a')) != 0)
+      self.assertTrue(int(cache.pop('hermes:tag:z')) != 0)
+      
+      self.assertEqual('mk:alpha:beta', ':'.join(cache.keys()[0].split(':')[:-1]))
+      self.assertEqual('apabt', cache.values()[0])
     
     bar.invalidate('alpha', 'beta')
+    
+    
     self.assertEqual(1,  counter['foo'])
-    self.assertEqual({
-      'hermes:tag:a' : '-468864544',
-      'hermes:tag:z' : '-1563822213',
-    }, self.unpickleCache())
+    
+    cache = self.unpickleCache()
+    self.assertTrue(cache.get('hermes:tag:a') != cache.get('hermes:tag:z'))
+    self.assertTrue(int(cache.pop('hermes:tag:a')) != 0)
+    self.assertTrue(int(cache.pop('hermes:tag:z')) != 0)
 
   def testKey(self):
     self.assertEqual(0,  self.fixture.calls)
@@ -428,17 +559,21 @@ class TestDictCustomMangler(TestDict):
     for _ in range(4):
       self.assertEqual('apabt', self.fixture.key('alpha', 'beta'))
       self.assertEqual(1,       self.fixture.calls)
-      self.assertEqual({
-        'hermes:tag:ash'   : '-1585925413',
-        'hermes:tag:stone' : '661884642',
-        'mykey:alpha:beta:1594080686' : 'apabt'
-      }, self.unpickleCache())
+      
+      cache = self.unpickleCache()
+      self.assertTrue(cache.get('hermes:tag:ash') != cache.get('hermes:tag:stone'))
+      self.assertTrue(int(cache.pop('hermes:tag:ash')) != 0)
+      self.assertTrue(int(cache.pop('hermes:tag:stone')) != 0)
+      
+      self.assertEqual('mykey:alpha:beta', ':'.join(cache.keys()[0].split(':')[:-1]))
+      self.assertEqual('apabt', cache.values()[0])
     
     self.fixture.key.invalidate('alpha', 'beta')
-    self.assertEqual({
-      'hermes:tag:ash'   : '-1585925413',
-      'hermes:tag:stone' : '661884642'
-    }, self.unpickleCache())
+    
+    cache = self.unpickleCache()
+    self.assertTrue(cache.get('hermes:tag:ash') != cache.get('hermes:tag:stone'))
+    self.assertTrue(int(cache.pop('hermes:tag:ash')) != 0)
+    self.assertTrue(int(cache.pop('hermes:tag:stone')) != 0)
     
   def testAll(self):
     self.assertEqual(0,  self.fixture.calls)
@@ -447,17 +582,22 @@ class TestDictCustomMangler(TestDict):
     for _ in range(4):
       self.assertEqual({'a': 1, 'b': {'b': 'beta'}}, self.fixture.all({'alpha' : 1}, ['beta']))
       self.assertEqual(1, self.fixture.calls)
-      self.assertEqual({
-        'hermes:tag:a' : '-468864544',
-        'hermes:tag:z' : '-1563822213',
-        "mk:{'alpha':1}:['beta']:952232102" : {'a': 1, 'b': {'b': 'beta'}}
-      }, self.unpickleCache())
+      
+      cache = self.unpickleCache()
+      self.assertEqual(3, len(cache))
+      self.assertTrue(int(cache.pop('hermes:tag:a')) != 0)
+      self.assertTrue(int(cache.pop('hermes:tag:z')) != 0)
+      
+      expected = "mk:{'alpha':1}:['beta']"
+      self.assertEqual(expected, ':'.join(cache.keys()[0].split(':')[:-1]))
+      self.assertEqual({'a': 1, 'b': {'b': 'beta'}}, cache.values()[0])
     
     self.fixture.all.invalidate({'alpha' : 1}, ['beta'])
-    self.assertEqual({
-      'hermes:tag:a' : '-468864544',
-      'hermes:tag:z' : '-1563822213',
-    }, self.unpickleCache())
+    
+    cache = self.unpickleCache()
+    self.assertEqual(2, len(cache))
+    self.assertTrue(int(cache.pop('hermes:tag:a')) != 0)
+    self.assertTrue(int(cache.pop('hermes:tag:z')) != 0)
   
   def testClean(self):
     self.assertEqual(0,  self.fixture.calls)
@@ -479,45 +619,72 @@ class TestDictCustomMangler(TestDict):
     self.assertEqual('ateb+ahpla', self.fixture.simple('alpha', 'beta'))
     self.assertEqual('aldamg',     self.fixture.tagged('gamma', 'delta'))
     self.assertEqual(2,            self.fixture.calls)
-    self.assertEqual({
-      'hermes:entry:Fixture:simple:-1830972859'           : 'ateb+ahpla',
-      'hermes:entry:Fixture:tagged:-594928067:1557816737' : 'aldamg',
-      'hermes:tag:rock' : '337463927',
-      'hermes:tag:tree' : '837616492'
-    }, self.unpickleCache())
+    
+    cache = self.unpickleCache()
+    self.assertTrue(4, len(cache))
+    self.assertEqual('ateb+ahpla', cache.pop('hermes:entry:Fixture:simple:-1830972859'))
+    self.assertFalse(cache.get('hermes:tag:tree') == cache.get('hermes:tag:rock'))
+    self.assertTrue(int(cache.pop('hermes:tag:rock')) != 0)
+    self.assertTrue(int(cache.pop('hermes:tag:tree')) != 0)
+    
+    expected = 'hermes:entry:Fixture:tagged:-594928067'
+    self.assertEqual(expected, ':'.join(cache.keys()[0].split(':')[:-1]))
+    self.assertEqual('aldamg', cache.values()[0])
+    
     
     self.testee.clean(('rock',))
-    self.assertEqual({
-      'hermes:entry:Fixture:simple:-1830972859'           : 'ateb+ahpla',
-      'hermes:entry:Fixture:tagged:-594928067:1557816737' : 'aldamg',
-      'hermes:tag:tree' : '837616492'
-    }, self.unpickleCache())
+    
+    cache = self.unpickleCache()
+    self.assertTrue(3, len(cache))
+    self.assertEqual('ateb+ahpla', cache.pop('hermes:entry:Fixture:simple:-1830972859'))
+    self.assertTrue(int(cache.pop('hermes:tag:tree')) != 0)
+    self.assertFalse('hermes:tag:rock' in cache)
+    
+    self.assertEqual(expected, ':'.join(cache.keys()[0].split(':')[:-1]))
+    self.assertEqual('aldamg', cache.values()[0])
+
     
     self.assertEqual('ateb+ahpla', self.fixture.simple('alpha', 'beta'))
     self.assertEqual('aldamg',     self.fixture.tagged('gamma', 'delta'))
     self.assertEqual(3,            self.fixture.calls)
-    self.assertEqual({
-      'hermes:entry:Fixture:simple:-1830972859'           : 'ateb+ahpla',
-      'hermes:entry:Fixture:tagged:-594928067:1557816737' : 'aldamg',
-      'hermes:tag:rock' : '337463927',
-      'hermes:tag:tree' : '837616492'
-    }, self.unpickleCache())
+    
+    cache = self.unpickleCache()
+    self.assertTrue(4, len(cache))
+    self.assertEqual('ateb+ahpla', cache.pop('hermes:entry:Fixture:simple:-1830972859'))
+    self.assertFalse(cache.get('hermes:tag:tree') == cache.get('hermes:tag:rock'))
+    self.assertTrue(int(cache.pop('hermes:tag:rock')) != 0)
+    self.assertTrue(int(cache.pop('hermes:tag:tree')) != 0)
+    
+    self.assertEqual(expected, ':'.join(cache.keys()[0].split(':')[:-1]))
+    self.assertEqual('aldamg', cache.values()[0])
+    
     
     self.testee.clean(('rock', 'tree'))
-    self.assertEqual({
-      'hermes:entry:Fixture:simple:-1830972859'           : 'ateb+ahpla',
-      'hermes:entry:Fixture:tagged:-594928067:1557816737' : 'aldamg',
-    }, self.unpickleCache())
+    
+    cache = self.unpickleCache()
+    self.assertTrue(2, len(cache))
+    self.assertEqual('ateb+ahpla', cache.pop('hermes:entry:Fixture:simple:-1830972859'))
+    self.assertFalse('hermes:tag:tree' in cache)
+    self.assertFalse('hermes:tag:rock' in cache)
+    
+    self.assertEqual(expected, ':'.join(cache.keys()[0].split(':')[:-1]))
+    self.assertEqual('aldamg', cache.values()[0])
+    
     
     self.assertEqual('ateb+ahpla', self.fixture.simple('alpha', 'beta'))
     self.assertEqual('aldamg',     self.fixture.tagged('gamma', 'delta'))
     self.assertEqual(4,            self.fixture.calls)
-    self.assertEqual({
-      'hermes:entry:Fixture:simple:-1830972859'           : 'ateb+ahpla',
-      'hermes:entry:Fixture:tagged:-594928067:1557816737' : 'aldamg',
-      'hermes:tag:rock' : '337463927',
-      'hermes:tag:tree' : '837616492'
-    }, self.unpickleCache())
+    
+    cache = self.unpickleCache()
+    self.assertTrue(4, len(cache))
+    self.assertEqual('ateb+ahpla', cache.pop('hermes:entry:Fixture:simple:-1830972859'))
+    self.assertFalse(cache.get('hermes:tag:tree') == cache.get('hermes:tag:rock'))
+    self.assertTrue(int(cache.pop('hermes:tag:rock')) != 0)
+    self.assertTrue(int(cache.pop('hermes:tag:tree')) != 0)
+    
+    self.assertEqual(expected, ':'.join(cache.keys()[0].split(':')[:-1]))
+    self.assertEqual('aldamg', cache.values()[0])
+    
     
     self.testee.clean()
     
@@ -538,11 +705,13 @@ class TestDictCustomMangler(TestDict):
     map(threading.Thread.join,  threads)
     
     self.assertEqual(1, sum(log))
-    self.assertEqual({
-      'mk:alpha:beta:952232102' : 'apabt', 
-      'hermes:tag:a' : '-468864544', 
-      'hermes:tag:z' : '-1563822213'
-    }, self.unpickleCache())
+    
+    cache = self.unpickleCache()
+    self.assertTrue(int(cache.pop('hermes:tag:a')) != 0)
+    self.assertTrue(int(cache.pop('hermes:tag:z')) != 0)
+    
+    self.assertEqual('mk:alpha:beta', ':'.join(cache.keys()[0].split(':')[:-1]))
+    self.assertEqual('apabt', cache.values()[0])
     
     del log[:]
     self.testee.clean()
@@ -553,9 +722,10 @@ class TestDictCustomMangler(TestDict):
     map(threading.Thread.join,  threads)
     
     self.assertGreater(sum(log), 1, 'dogpile')
-    self.assertEqual({
-      'mk:alpha:beta:952232102' : 'apabt', 
-      'hermes:tag:a' : '-468864544', 
-      'hermes:tag:z' : '-1563822213'
-    }, self.unpickleCache())
-
+    
+    cache = self.unpickleCache()
+    self.assertTrue(int(cache.pop('hermes:tag:a')) != 0)
+    self.assertTrue(int(cache.pop('hermes:tag:z')) != 0)
+    
+    self.assertEqual('mk:alpha:beta', ':'.join(cache.keys()[0].split(':')[:-1]))
+    self.assertEqual('apabt', cache.values()[0])

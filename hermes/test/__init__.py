@@ -45,6 +45,11 @@ def createFixture(cache):
       self.calls += 1
       return '{0}-{1}'.format(a, b)[::-2]
     
+    @cache(tags = ('rock', 'ice'))
+    def tagged2(self, a, b):
+      self.calls += 1
+      return '{0}%{1}'.format(a, b)[::-2]
+    
     @cache(tags = ('ash', 'stone'), key = lambda fn, *args, **kwargs: 'mykey:{0}:{1}'.format(*args[1:]))
     def key(self, a, b):
       self.calls += 1
