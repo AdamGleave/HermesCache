@@ -56,7 +56,7 @@ class Backend(AbstractBackend):
   def __init__(self, mangler, **kwargs):
     super(Backend, self).__init__(mangler)
     
-    self.client = memcache.Client(kwargs.pop('url', ['localhost:11211']))
+    self.client = memcache.Client(kwargs.pop('servers', ['localhost:11211']))
     self.lock   = Lock(self.mangler, self.client, **kwargs)
   
   def save(self, key = None, value = None, mapping = None, ttl = None):

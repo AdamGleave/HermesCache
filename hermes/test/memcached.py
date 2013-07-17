@@ -77,7 +77,7 @@ class TestMemcached(test.TestCase):
       return '{0}+{1}'.format(a, b)[::-1]
     
     key = lambda fn, *args, **kwargs: 'mk:{0}:{1}'.format(*args)
-    @self.testee(tags = ('a', 'z'), key = key, ttl = 120)
+    @self.testee(tags = ('a', 'z'), key = key, ttl = 1)
     def bar(a, b):
       counter['bar'] += 1
       return '{0}-{1}'.format(a, b)[::2]
@@ -117,6 +117,15 @@ class TestMemcached(test.TestCase):
     self.assertEqual(1,  counter['foo'])
     self.assertIsNone(self.testee._backend.client.get(key))
     self.assertEqual(2, self.getSize())
+    
+    self.assertEqual('apabt', bar('alpha', 'beta'))
+    self.assertEqual(2, counter['bar'])
+    self.assertEqual(3, self.getSize())
+    time.sleep(1.5)
+    self.assertIsNone(self.testee._backend.client.get(key), 'should already expire')
+    self.assertEqual(2, self.getSize())
+    
+    self.testee.clean(('a', 'z'))
 
   def testKey(self):
     self.assertEqual(0, self.fixture.calls)
@@ -138,6 +147,8 @@ class TestMemcached(test.TestCase):
     self.assertEqual('25f9af512cf657ae', pickle.loads(self.testee._backend.client.get('cache:tag:ash')))
     self.assertEqual('080f56f33dfc865b', pickle.loads(self.testee._backend.client.get('cache:tag:stone')))
     
+    self.testee.clean(('a', 'z'))
+    
   def testAll(self):
     self.assertEqual(0, self.fixture.calls)
     self.assertEqual(0, self.getSize())
@@ -156,6 +167,8 @@ class TestMemcached(test.TestCase):
     self.assertEqual(2, self.getSize())
     self.assertEqual('0c7bcfba3c9e6726', pickle.loads(self.testee._backend.client.get('cache:tag:a')))
     self.assertEqual('faee633dd7cb041d', pickle.loads(self.testee._backend.client.get('cache:tag:z')))
+    
+    self.testee.clean(('a', 'z'))
   
   def testClean(self):
     self.assertEqual(0, self.fixture.calls)
@@ -275,6 +288,8 @@ class TestMemcached(test.TestCase):
     self.assertEqual('0c7bcfba3c9e6726', pickle.loads(self.testee._backend.client.get('cache:tag:a')))
     self.assertEqual('faee633dd7cb041d', pickle.loads(self.testee._backend.client.get('cache:tag:z')))
     self.assertEqual(3, self.getSize())
+    
+    self.testee.clean(('a', 'z'))
 
 
 class TestMemcachedLock(test.TestCase):
