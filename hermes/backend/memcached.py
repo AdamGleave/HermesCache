@@ -47,10 +47,10 @@ class Lock(AbstractLock):
 
 
 class Backend(AbstractBackend):
-  '''Redis backend implementation'''
+  '''Memcached backend implementation'''
   
   client = None
-  '''Redis client'''
+  '''Memcached client'''
   
   
   def __init__(self, mangler, **kwargs):
