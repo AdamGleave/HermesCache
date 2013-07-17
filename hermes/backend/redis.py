@@ -1,12 +1,12 @@
 '''
 @author: saaj
-@note: named *redispy* instead of *redis* because confilicts under test environment
 '''
 
 
-from . import AbstractBackend, AbstractLock
+import importlib
+redis = importlib.import_module('redis')
 
-import redis
+from . import AbstractBackend, AbstractLock
 
 
 class Lock(AbstractLock):

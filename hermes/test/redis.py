@@ -8,13 +8,13 @@ import time
 import pickle
 
 import hermes.test as test
-import hermes.backend.redispy
+import hermes.backend.redis
 
 
 class TestRedis(test.TestCase):
   
   def setUp(self):
-    self.testee = hermes.Hermes(hermes.backend.redispy.Backend, ttl = 360, lockTimeout = 120) 
+    self.testee = hermes.Hermes(hermes.backend.redis.Backend, ttl = 360, lockTimeout = 120) 
     self.fixture = test.createFixture(self.testee) 
     
     self.testee.clean()
@@ -296,8 +296,8 @@ class TestRedis(test.TestCase):
 class TestRedisLock(test.TestCase):
   
   def setUp(self):
-    cache       = hermes.Hermes(hermes.backend.redispy.Backend) 
-    self.testee = hermes.backend.redispy.Lock(cache._backend.mangler, cache._backend.client)
+    cache       = hermes.Hermes(hermes.backend.redis.Backend) 
+    self.testee = hermes.backend.redis.Lock(cache._backend.mangler, cache._backend.client)
   
   def testAcquire(self):
     for _ in range(2):
