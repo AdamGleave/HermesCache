@@ -32,13 +32,16 @@ class Lock(AbstractLock):
   def __init__(self, mangler, client, **kwargs):
     super(Lock, self).__init__(mangler)
     
-    self.timeout = kwargs.get('lockTimeout', self.timeout)
-    self.sleep   = kwargs.get('lockSleep', self.sleep)
     self.client  = client
+    
+    self.sleep   = kwargs.get('lockSleep',   self.sleep)
+    self.timeout = kwargs.get('lockTimeout', self.timeout)
+    if self.timeout is None:
+      self.timeout = 0
 
   def acquire(self, wait = True):
     while True:
-      if self.client.add(str(self.key), 1):
+      if self.client.add(self.key, 'locked', self.timeout):
         return True
       elif not wait:
         return False
@@ -46,7 +49,7 @@ class Lock(AbstractLock):
         time.sleep(self.sleep)
 
   def release(self):
-    self.client.delete(str(self.key))
+    self.client.delete(self.key)
 
 
 class Backend(AbstractBackend):
