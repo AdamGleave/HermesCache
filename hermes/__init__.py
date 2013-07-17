@@ -96,7 +96,8 @@ class Hermes(object):
       foo.invalidate(2, 333)
       bar.invalidate(2, 10)
       
-      cache.clean(['math', 'power'])
+      cache.clean(['math', 'power']) # remove tags
+      cache.clean()                  # remove all
       
     Positional agruments are backend class and mangler class. If ommited noop-backend
     and built-in mangler will be be used.
