@@ -11,7 +11,44 @@ Hermes is a Python caching library. The requirements it was designed to fulfill:
   * Simple, at the same time, flexible decorator as end-user API,
   * Interface for implementing multiple backends.
 
-  
+
+Usage
+=====
+
+.. code-block:: python
+
+  import hermes.backend.redis
+    
+  cache = hermes.Hermes(hermes.backend.redis.Backend, ttl = 600)
+      
+  @cache
+  def foo(a, b):
+    return a * b
+        
+  @cache(tags = ('math', 'power'), ttl = 1200)
+  def bar(a, b):
+    return a ** b
+        
+  print foo(2, 333)
+  print bar(2, 10)
+      
+  foo.invalidate(2, 333)
+  bar.invalidate(2, 10)
+      
+  cache.clean(['math', 'power']) # remove tags
+  cache.clean()                  # remove all
+
+
+
+Tagging cache entries
+=====================
+
+here some description
+
+
+Reviewed implementations
+========================
+
 Reviewed implementations:
 
   * cache
