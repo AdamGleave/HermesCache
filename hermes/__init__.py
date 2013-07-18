@@ -68,54 +68,66 @@ class Mangler(object):
 
 
 class Hermes(object):
-  '''Cache facade''' 
+  '''Cache facade. Usage: 
+    
+      import hermes.backend.redis
+    
+      cache = hermes.Hermes(hermes.backend.redis.Backend, ttl = 600, host = 'localhost', db = 1)
+          
+          
+      @cache
+      def foo(a, b):
+        return a * b
+      
+      class Example:
+            
+        @cache(tags = ('math', 'power'), ttl = 1200)
+        def bar(self, a, b):
+          return a ** b
+          
+        @cache(tags = ('math', 'avg'), key = lambda fn, *args, **kwargs: 'avg:{0}:{1}'.format(*args[1:]))
+        def baz(self, a, b):
+          return (a + b) / 2.0
   
-  _backend = None
+            
+      print foo(2, 333)
+      
+      example = Example()
+      print example.bar(2, 10)
+      print example.baz(2, 10)
+          
+      foo.invalidate(2, 333)
+      example.bar.invalidate(2, 10)
+      example.baz.invalidate(2, 10)
+          
+      cache.clean(['math']) # invalidate entries tagged 'math'
+      cache.clean()         # flush cache''' 
+  
+  backend = None
   '''Cache backend'''
   
-  _mangler = None
+  mangler = None
   '''Key manager responsible for creating keys, hashing and serialzation'''
   
-  _ttl = 3600
+  ttl = 3600
   '''Default cache entry Time To Live'''
   
   
   def __init__(self, backendClass = AbstractBackend, manglerClass = Mangler, **kwargs):
-    '''Creates a cache decorator factory. Usage: ::
-    
-      import hermes.backend.redis
-    
-      cache = hermes.Hermes(hermes.backend.redis.Backend, ttl = 600)
-      
-      @cache
-      def foo(a, b):
-        return a * b
-        
-      @cache(tags = ('math', 'power'), ttl = 1200)
-      def bar(a, b):
-        return a ** b
-        
-      print foo(2, 333)
-      print bar(2, 10)
-      
-      foo.invalidate(2, 333)
-      bar.invalidate(2, 10)
-      
-      cache.clean(['math', 'power']) # remove tags
-      cache.clean()                  # remove all
+    '''Creates a cache decorator factory. 
       
     Positional agruments are backend class and mangler class. If ommited noop-backend
     and built-in mangler will be be used.
     
-    Keyword arguments comprise of ``ttl`` and backend parameters'''
+    Keyword arguments comprise of ``ttl`` and backend parameters.'''
     
-    self._ttl = kwargs.pop('ttl', self._ttl)
+    self.ttl = kwargs.pop('ttl', self.ttl)
     
     assert issubclass(manglerClass, Mangler)
-    self._mangler = manglerClass()
+    self.mangler = manglerClass()
     
     assert issubclass(backendClass, AbstractBackend)
-    self._backend = backendClass(self._mangler, **kwargs)
+    self.backend = backendClass(self.mangler, **kwargs)
 
   def __call__(self, *args, **kwargs):
     '''Decorator that caches method or function result. The following key arguments are optional:
@@ -129,18 +141,18 @@ class Hermes(object):
     
     if args and isinstance(args[0], (types.FunctionType, types.MethodType)):
       # @cache
-      return Cached(self._backend, self._mangler, self._ttl, args[0])
+      return Cached(self.backend, self.mangler, self.ttl, args[0])
     else:
       # @cache()
-      return lambda fn: Cached(self._backend, self._mangler, kwargs.pop('ttl', self._ttl), fn, **kwargs)
+      return lambda fn: Cached(self.backend, self.mangler, kwargs.pop('ttl', self.ttl), fn, **kwargs)
     
   def clean(self, tags = None):
     '''If tags argument is omitted flushes all entries, otherwise removes provided tag entries'''
     
     if tags:
-      self._backend.remove(map(self._mangler.nameTag, tags))
+      self.backend.remove(map(self.mangler.nameTag, tags))
     else:
-      self._backend.clean()
+      self.backend.clean()
 
 
 class Cached(object):
