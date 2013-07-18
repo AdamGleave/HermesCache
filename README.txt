@@ -90,7 +90,7 @@ When a callable (function or method) is cached, the key is calculated per invoca
 itself and passed arguments. Callable's return value is saved to the key. Next invocation we can
 use the value from cache.
 
-  "There are only two hard problems in Computer Science: cache invalidation and naming things." —
+  *"There are only two hard problems in Computer Science: cache invalidation and naming things."* —
   Phil Karlton
 
 So it comes in a complex application. There's a case that certain group of methods operate the same
