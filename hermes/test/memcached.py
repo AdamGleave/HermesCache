@@ -164,7 +164,7 @@ class TestMemcached(test.TestCase):
     self.assertEqual('apabt', bar('alpha', 'beta'))
     self.assertEqual(2, counter['bar'])
     self.assertEqual(3, self.getSize())
-    time.sleep(1.5)
+    time.sleep(2)
     self.assertIsNone(self.testee._backend.client.get(key), 'should already expire')
     self.assertEqual(2, self.getSize())
     
@@ -410,6 +410,13 @@ class TestMemcachedLock(test.TestCase):
     with self.testee('some:key'):
       self.assertFalse(self.testee.acquire(False))
       self.assertEqual('cache:lock:some:key', self.testee.key)
+      
+      client  = hermes.backend.memcached.Backend(self.testee.mangler).client
+      another = hermes.backend.memcached.Lock(self.testee.mangler, client)
+      with another('another:key'):
+        self.assertFalse(another.acquire(False))
+        self.assertFalse(self.testee.acquire(False))
+        self.assertEqual('cache:lock:another:key', another.key)
       
   def testConcurrent(self):
     log   = []

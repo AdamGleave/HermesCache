@@ -233,7 +233,7 @@ class TestDict(test.TestCase):
     
     cache = self.unpickleCache()
     self.assertEqual(4, len(cache))
-    self.assertEqual('ateb+ahpla', cache['cache:entry:Fixture:simple:109cc9a8853ebcb1'])
+    self.assertEqual('ateb+ahpla', cache.pop('cache:entry:Fixture:simple:109cc9a8853ebcb1'))
     self.assertEqual(16, len(cache.pop('cache:tag:rock')))
     self.assertEqual(16, len(cache.pop('cache:tag:tree')))
     
@@ -246,7 +246,7 @@ class TestDict(test.TestCase):
     
     cache = self.unpickleCache()
     self.assertEqual(3, len(cache))
-    self.assertEqual('ateb+ahpla', cache['cache:entry:Fixture:simple:109cc9a8853ebcb1'])
+    self.assertEqual('ateb+ahpla', cache.pop('cache:entry:Fixture:simple:109cc9a8853ebcb1'))
     self.assertEqual(16, len(cache.pop('cache:tag:tree')))
     self.assertFalse('cache:tag:rock' in cache)
     
@@ -261,7 +261,7 @@ class TestDict(test.TestCase):
     
     cache = self.unpickleCache()
     self.assertEqual(5, len(cache), '+1 old tagged entry')
-    self.assertEqual('ateb+ahpla', cache['cache:entry:Fixture:simple:109cc9a8853ebcb1'])
+    self.assertEqual('ateb+ahpla', cache.pop('cache:entry:Fixture:simple:109cc9a8853ebcb1'))
     self.assertEqual(16, len(cache.pop('cache:tag:rock')))
     self.assertEqual(16, len(cache.pop('cache:tag:tree')))
     
@@ -274,7 +274,7 @@ class TestDict(test.TestCase):
     
     cache = self.unpickleCache()
     self.assertEqual(3, len(cache))
-    self.assertEqual('ateb+ahpla', cache['cache:entry:Fixture:simple:109cc9a8853ebcb1'])
+    self.assertEqual('ateb+ahpla', cache.pop('cache:entry:Fixture:simple:109cc9a8853ebcb1'))
     self.assertFalse('cache:tag:tree' in cache)
     self.assertFalse('cache:tag:rock' in cache)
     
@@ -289,7 +289,7 @@ class TestDict(test.TestCase):
     
     cache = self.unpickleCache()
     self.assertEqual(6, len(cache), '+2 old tagged entries')
-    self.assertEqual('ateb+ahpla', cache['cache:entry:Fixture:simple:109cc9a8853ebcb1'])
+    self.assertEqual('ateb+ahpla', cache.pop('cache:entry:Fixture:simple:109cc9a8853ebcb1'))
     self.assertEqual(16, len(cache.pop('cache:tag:rock')))
     self.assertEqual(16, len(cache.pop('cache:tag:tree')))
     
