@@ -63,3 +63,6 @@ class Backend(AbstractBackend):
 
   def clean(self):
     self.cache.clear()
+    
+  def dump(self):
+    return {k : self.mangler.loads(v) for k, v in self.cache.items()}
