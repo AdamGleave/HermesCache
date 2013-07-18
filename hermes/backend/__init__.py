@@ -62,6 +62,9 @@ class AbstractBackend(object):
     pass
   
   def load(self, keys):
+    '''Note, when handling a multiple key call, absent value keys 
+    should be excluded from resulting dictionary''' 
+    
     return None if self._isScalar(keys) else {} 
   
   def remove(self, keys):
