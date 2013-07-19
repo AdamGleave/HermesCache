@@ -366,6 +366,29 @@ class TestMemcached(test.TestCase):
     key     = 'mk:alpha:beta:' + tagHash
     self.assertEqual('apabt', pickle.loads(self.testee.backend.client.get(key)))
     
+    
+    del log[:]
+    self.testee.clean()
+    self.testee.backend.lock = lambda k: hermes.backend.AbstractLock(k) # now see a dogpile 
+    
+    threads = map(lambda i: threading.Thread(target = bar, args = ('alpha', 'beta')), range(4))
+    map(threading.Thread.start, threads)
+    map(threading.Thread.join,  threads)
+    
+    self.assertGreater(sum(log), 1, 'dogpile')
+    self.assertEqual(3, self.getSize())
+    
+    aTag = pickle.loads(self.testee.backend.client.get('cache:tag:a'))
+    zTag = pickle.loads(self.testee.backend.client.get('cache:tag:z'))
+    self.assertFalse(aTag == zTag)
+    self.assertEqual(16, len(aTag))
+    self.assertEqual(16, len(zTag))
+    
+    tagHash = self.testee.mangler.hashTags(dict(a = aTag, z = zTag))
+    key     = 'mk:alpha:beta:' + tagHash
+    self.assertEqual('apabt', pickle.loads(self.testee.backend.client.get(key)))
+    
+    
     self.testee.clean(('a', 'z'))
 
 
