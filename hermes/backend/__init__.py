@@ -37,7 +37,7 @@ class AbstractBackend(object):
   '''Key manager responsible for creating keys, hashing and serialzation'''
   
 
-  def __init__(self, mangler):
+  def __init__(self, mangler, **kwargs):
     self.mangler = mangler
     
   @staticmethod

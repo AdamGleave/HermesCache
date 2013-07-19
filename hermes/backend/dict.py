@@ -40,7 +40,7 @@ class Backend(AbstractBackend):
   '''Lock instance'''
   
   
-  def __init__(self, mangler):
+  def __init__(self, mangler, **kwargs):
     super(Backend, self).__init__(mangler)
     
     self.cache = {}
