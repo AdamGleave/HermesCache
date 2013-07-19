@@ -27,7 +27,8 @@ class Lock(AbstractLock):
 
 
 class Backend(AbstractBackend):
-  '''Test purpose backend implementation. Does not support entry expiry.'''
+  '''Test purpose backend implementation. Does not support entry expiry. ``save`` and ``delete``
+  are not atomic in general.'''
   
   
   cache = None

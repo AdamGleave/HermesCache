@@ -7,6 +7,7 @@ Hermes is a Python caching library. The requirements it was designed to fulfill:
 
   * Tag-based cache invalidation
   * Dogpile effect prevention
+  * Thread-safety 
   * Straightforward design
   * Simple, at the same time, flexible decorator as end-user API
   * Interface for implementing multiple backends
