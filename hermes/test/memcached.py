@@ -332,6 +332,14 @@ class TestMemcached(test.TestCase):
     self.testee.clean()
     self.assertEqual(0, self.getSize())
     
+  def testNested(self):
+    self.assertEqual('beta+alpha', self.fixture.nested('alpha', 'beta'))
+    self.assertEqual(2, self.fixture.calls)
+    key = 'cache:entry:Fixture:nested:109cc9a8853ebcb1'
+    self.assertEqual('beta+alpha', pickle.loads(self.testee.backend.client.get(key)))
+    key = 'cache:entry:Fixture:simple:304d56b9ab021ab2'
+    self.assertEqual('ahpla+ateb', pickle.loads(self.testee.backend.client.get(key)))  
+    
   def testConcurrent(self):
     log = []
     key = lambda fn, *args, **kwargs: 'mk:{0}:{1}'.format(*args)
@@ -365,14 +373,14 @@ class TestMemcachedLock(test.TestCase):
   
   def setUp(self):
     cache       = hermes.Hermes(hermes.backend.memcached.Backend) 
-    self.testee = hermes.backend.memcached.Lock(cache.backend.mangler, cache.backend.client)
+    self.testee = hermes.backend.memcached.Lock('123', cache.backend.client)
   
   def testAcquire(self):
     for _ in range(2):
       try:
         self.assertTrue(self.testee.acquire(True))
         self.assertFalse(self.testee.acquire(False))
-        self.assertEqual('cache:lock:default', self.testee.key)
+        self.assertEqual('123', self.testee.key)
       finally:
         self.testee.release()
 
@@ -381,27 +389,27 @@ class TestMemcachedLock(test.TestCase):
       try:
         self.assertTrue(self.testee.acquire(True))
         self.assertFalse(self.testee.acquire(False))
-        self.assertEqual('cache:lock:default', self.testee.key)
+        self.assertEqual('123', self.testee.key)
       finally:
         self.testee.release()
     
   def testWith(self):
-    with self.testee('some:key'):
+    with self.testee:
       self.assertFalse(self.testee.acquire(False))
-      self.assertEqual('cache:lock:some:key', self.testee.key)
+      self.assertEqual('123', self.testee.key)
       
-      client  = hermes.backend.memcached.Backend(self.testee.mangler).client
-      another = hermes.backend.memcached.Lock(self.testee.mangler, client)
-      with another('another:key'):
+      client  = hermes.backend.memcached.Backend(hermes.Mangler()).client
+      another = hermes.backend.memcached.Lock('234', client)
+      with another:
         self.assertFalse(another.acquire(False))
         self.assertFalse(self.testee.acquire(False))
-        self.assertEqual('cache:lock:another:key', another.key)
+        self.assertEqual('234', another.key)
       
   def testConcurrent(self):
     log   = []
     check = threading.Lock()
     def target():
-      with self.testee(key = '123'):
+      with self.testee:
         log.append(check.acquire(False))
         time.sleep(0.05)
         check.release()

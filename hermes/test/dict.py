@@ -298,6 +298,14 @@ class TestDict(test.TestCase):
     
     self.assertEqual(4,  self.fixture.calls)
     self.assertEqual({}, self.testee.backend.dump())
+  
+  def testNested(self):
+    self.assertEqual('beta+alpha', self.fixture.nested('alpha', 'beta'))
+    self.assertEqual(2, self.fixture.calls)
+    self.assertEqual({
+      'cache:entry:Fixture:nested:109cc9a8853ebcb1': 'beta+alpha', 
+      'cache:entry:Fixture:simple:304d56b9ab021ab2': 'ahpla+ateb'
+    }, self.testee.backend.dump())
     
   def testConcurrent(self):
     log = []
@@ -323,7 +331,7 @@ class TestDict(test.TestCase):
     
     del log[:]
     self.testee.clean()
-    self.testee.backend.lock = hermes.backend.AbstractLock() # now see a dogpile 
+    self.testee.backend.lock = lambda k: hermes.backend.AbstractLock(k) # now see a dogpile 
     
     threads = map(lambda i: threading.Thread(target = bar, args = ('alpha', 'beta')), range(4))
     map(threading.Thread.start, threads)
@@ -342,13 +350,13 @@ class TestDict(test.TestCase):
 class TestDictLock(test.TestCase):
   
   def setUp(self):
-    self.testee = hermes.backend.dict.Lock()
+    self.testee = hermes.backend.dict.Lock('123')
   
   def testAcquire(self):
     for _ in range(2):
       try:
         self.assertTrue(self.testee.acquire(True))
-        self.assertFalse(self.testee.acquire(False))
+        self.assertTrue(self.testee.acquire(False)) # reintrant within one thread
       finally:
         self.testee.release()
     
@@ -356,19 +364,19 @@ class TestDictLock(test.TestCase):
     for _ in range(2):
       try:
         self.assertTrue(self.testee.acquire(True))
-        self.assertFalse(self.testee.acquire(False))
+        self.assertTrue(self.testee.acquire(False)) # reintrant within one thread
       finally:
         self.testee.release()
     
   def testWith(self):
     with self.testee:
-      self.assertFalse(self.testee.acquire(False))
+      self.assertTrue(self.testee.acquire(False)) # reintrant within one thread
       
   def testConcurrent(self):
     log   = []
     check = threading.Lock()
     def target():
-      with self.testee(key = 123):
+      with self.testee:
         log.append(check.acquire(False))
         time.sleep(0.05)
         check.release()
@@ -683,6 +691,14 @@ class TestDictCustomMangler(TestDict):
     
     self.assertEqual(4,  self.fixture.calls)
     self.assertEqual({}, self.testee.backend.dump())
+  
+  def testNested(self):
+    self.assertEqual('beta+alpha', self.fixture.nested('alpha', 'beta'))
+    self.assertEqual(2, self.fixture.calls)
+    self.assertEqual({
+      'hermes:entry:Fixture:nested:-1830972859': 'beta+alpha', 
+      'hermes:entry:Fixture:simple:-1020720887': 'ahpla+ateb'
+    }, self.testee.backend.dump())
     
   def testConcurrent(self):
     log = []
@@ -708,7 +724,7 @@ class TestDictCustomMangler(TestDict):
     
     del log[:]
     self.testee.clean()
-    self.testee.backend.lock = hermes.backend.AbstractLock() # now see a dogpile 
+    self.testee.backend.lock = lambda k: hermes.backend.AbstractLock(k) # now see a dogpile 
     
     threads = map(lambda i: threading.Thread(target = bar, args = ('alpha', 'beta')), range(4))
     map(threading.Thread.start, threads)

@@ -118,12 +118,16 @@ class TestAbstract(test.TestCase):
     self.testee.clean()
     
     self.assertEqual(6,  self.fixture.calls)
+    
+  def testNested(self):
+    self.assertEqual('beta+alpha', self.fixture.nested('alpha', 'beta'))
+    self.assertEqual(2, self.fixture.calls)
 
 
 class TestAbstractLock(test.TestCase):
   
   def setUp(self):
-    self.testee = hermes.backend.AbstractLock()
+    self.testee = hermes.backend.AbstractLock('123')
   
   def testAcquire(self):
     for _ in range(2):
@@ -149,7 +153,7 @@ class TestAbstractLock(test.TestCase):
     log   = []
     check = threading.Lock()
     def target():
-      with self.testee(key = 123):
+      with self.testee:
         locked = check.acquire(False)
         log.append(locked)
         time.sleep(0.05)

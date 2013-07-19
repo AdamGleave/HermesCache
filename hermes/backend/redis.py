@@ -15,27 +15,21 @@ __all__ = 'Lock', 'Backend'
 class Lock(AbstractLock):
   '''Key-aware distrubuted lock'''
   
-  lock = None
+  _lock = None
   '''Redis lock instance'''  
   
   
-  def __init__(self, mangler, client, **kwargs):
-    super(Lock, self).__init__(mangler)
-    
-    self.lock = client.lock(self.key, **{
+  def __init__(self, key, client, **kwargs):
+    self._lock = client.lock(key, **{
       'timeout' : kwargs.get('lockTimeout', 900),
       'sleep'   : kwargs.get('lockSleep',   0.1)
     })
 
-  def __call__(self, key):
-    self.lock.name = self.mangler.nameLock(key) 
-    return self
-
   def acquire(self, wait = True):
-    return self.lock.acquire(wait)
+    return self._lock.acquire(wait)
 
   def release(self):
-    self.lock.release()
+    self._lock.release()
 
 
 class Backend(AbstractBackend):
@@ -43,6 +37,9 @@ class Backend(AbstractBackend):
   
   client = None
   '''Redis client'''
+  
+  _options = None
+  '''Lock options'''
   
   
   def __init__(self, mangler, **kwargs):
@@ -55,7 +52,10 @@ class Backend(AbstractBackend):
       'db'       : kwargs.pop('db',       0)
     })
     
-    self.lock = Lock(self.mangler, self.client, **kwargs)
+    self._options = kwargs
+  
+  def lock(self, key):
+    return Lock(self.mangler.nameLock(key), self.client, **self._options)
   
   def save(self, key = None, value = None, mapping = None, ttl = None):
     if not mapping:

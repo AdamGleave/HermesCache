@@ -30,10 +30,10 @@ class Lock(AbstractLock):
   '''Amount of time to sleep per ``while True`` iteration when waiting'''
   
   
-  def __init__(self, mangler, client, **kwargs):
-    super(Lock, self).__init__(mangler)
+  def __init__(self, key, client, **kwargs):
+    super(Lock, self).__init__(key)
     
-    self.client  = client
+    self.client = client
     
     self.sleep   = kwargs.get('lockSleep',   self.sleep)
     self.timeout = kwargs.get('lockTimeout', self.timeout)
@@ -77,14 +77,8 @@ class Backend(AbstractBackend):
       
     return self._local.client
   
-  @property
-  def lock(self):
-    '''Thread-mapped memcached distrubuted lock accessor'''
-    
-    if not hasattr(self._local, 'lock'):
-      self._local.lock = Lock(self.mangler, self.client, **self._options)
-    
-    return self._local.lock
+  def lock(self, key):
+    return Lock(self.mangler.nameLock(key), self.client, **self._options)
   
   def save(self, key = None, value = None, mapping = None, ttl = None):
     if not mapping:

@@ -40,6 +40,11 @@ def createFixture(cache):
       self.calls += 1
       return '{0}+{1}'.format(a, b)[::-1]
     
+    @cache
+    def nested(self, a, b):
+      self.calls += 1
+      return self.simple(b, a)[::-1]
+    
     @cache(tags = ('rock', 'tree'))
     def tagged(self, a, b):
       self.calls += 1

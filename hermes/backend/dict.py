@@ -14,16 +14,18 @@ __all__ = 'Lock', 'Backend'
 class Lock(AbstractLock):
   '''Key-unaware thread lock'''
   
-  def __init__(self, mangler = None):
-    super(Lock, self).__init__(mangler)
     
-    self.lock = threading.Lock()
+  _lock = None
+  '''Threading lock instance'''  
+  
+  def __init__(self, key):
+    self._lock = threading.RLock()
 
   def acquire(self, wait = True):
-    return self.lock.acquire(wait)
+    return self._lock.acquire(wait)
 
   def release(self):
-    self.lock.release()
+    self._lock.release()
 
 
 class Backend(AbstractBackend):
@@ -34,12 +36,18 @@ class Backend(AbstractBackend):
   cache = None
   '''A dict intance'''
   
+  _lock = None
+  '''Lock instance'''
+  
   
   def __init__(self, mangler):
     super(Backend, self).__init__(mangler)
     
-    self.lock  = Lock(mangler)
     self.cache = {}
+    self._lock = Lock(None)
+  
+  def lock(self, key):
+    return self._lock
   
   def save(self, key = None, value = None, mapping = None, ttl = None):
     if not mapping:

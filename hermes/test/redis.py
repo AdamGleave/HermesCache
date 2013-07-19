@@ -337,6 +337,14 @@ class TestRedis(test.TestCase):
     self.testee.clean(('rock', 'tree'))
     self.testee.clean()
     self.assertEqual(0, self.testee.backend.client.dbsize())
+  
+  def testNested(self):
+    self.assertEqual('beta+alpha', self.fixture.nested('alpha', 'beta'))
+    self.assertEqual(2, self.fixture.calls)
+    key = 'cache:entry:Fixture:nested:109cc9a8853ebcb1'
+    self.assertEqual('beta+alpha', pickle.loads(self.testee.backend.client.get(key)))
+    key = 'cache:entry:Fixture:simple:304d56b9ab021ab2'
+    self.assertEqual('ahpla+ateb', pickle.loads(self.testee.backend.client.get(key)))
     
   def testConcurrent(self):
     log = []
@@ -366,7 +374,7 @@ class TestRedis(test.TestCase):
     
     del log[:]
     self.testee.clean()
-    self.testee.backend.lock = hermes.backend.AbstractLock() # now see a dogpile 
+    self.testee.backend.lock = lambda k: hermes.backend.AbstractLock(k) # now see a dogpile 
     
     threads = map(lambda i: threading.Thread(target = bar, args = ('alpha', 'beta')), range(4))
     map(threading.Thread.start, threads)
@@ -390,14 +398,14 @@ class TestRedisLock(test.TestCase):
   
   def setUp(self):
     cache       = hermes.Hermes(hermes.backend.redis.Backend) 
-    self.testee = hermes.backend.redis.Lock(cache.backend.mangler, cache.backend.client)
+    self.testee = hermes.backend.redis.Lock('123', cache.backend.client)
   
   def testAcquire(self):
     for _ in range(2):
       try:
         self.assertTrue(self.testee.acquire(True))
         self.assertFalse(self.testee.acquire(False))
-        self.assertEqual('cache:lock:default', self.testee.lock.name)
+        self.assertEqual('123', self.testee._lock.name)
       finally:
         self.testee.release()
 
@@ -406,27 +414,27 @@ class TestRedisLock(test.TestCase):
       try:
         self.assertTrue(self.testee.acquire(True))
         self.assertFalse(self.testee.acquire(False))
-        self.assertEqual('cache:lock:default', self.testee.lock.name)
+        self.assertEqual('123', self.testee._lock.name)
       finally:
         self.testee.release()
     
   def testWith(self):
-    with self.testee('some:key'):
+    with self.testee:
       self.assertFalse(self.testee.acquire(False))
-      self.assertEqual('cache:lock:some:key', self.testee.lock.name)
+      self.assertEqual('123', self.testee._lock.name)
       
-      client  = hermes.backend.redis.Backend(self.testee.mangler).client
-      another = hermes.backend.redis.Lock(self.testee.mangler, client)
-      with another('another:key'):
+      client  = hermes.backend.redis.Backend(hermes.Mangler()).client
+      another = hermes.backend.redis.Lock('234', client)
+      with another:
         self.assertFalse(another.acquire(False))
         self.assertFalse(self.testee.acquire(False))
-        self.assertEqual('cache:lock:another:key', another.lock.name)
+        self.assertEqual('234', another._lock.name)
       
   def testConcurrent(self):
     log   = []
     check = threading.Lock()
     def target():
-      with self.testee(key = '123'):
+      with self.testee:
         log.append(check.acquire(False))
         time.sleep(0.05)
         check.release()
