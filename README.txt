@@ -140,7 +140,7 @@ so there're following implication on number of network operations:
   * ``get`` – 2x backend calls.
   * ``delete`` – 2x backend calls.
 
-Memory overhead consists of: tag entries and stale cache entries. Demonstrated below.
+Memory overhead consists of tag entries and stale cache entries. Demonstrated below.
 
 .. code-block:: python
 
