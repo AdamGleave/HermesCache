@@ -140,7 +140,7 @@ so there're following implication on number of network operations:
   * ``get`` – 2x backend calls.
   * ``delete`` – 2x backend calls.
 
-Memory footprint consists of: tag entries and stale cache entries. Demonstrated below.
+Memory overhead consists of: tag entries and stale cache entries. Demonstrated below.
 
 .. code-block:: python
 
@@ -171,6 +171,9 @@ Memory footprint consists of: tag entries and stale cache entries. Demonstrated 
     #    'cache:entry:foo:a1c97600eac6febb:8e7e24cf70c1f0ab': 4,  
     #    'cache:entry:foo:a1c97600eac6febb:5cae80f5e7d58329': 4  ← garbage
     #  }
+    
+So the TTLs should be chosen elaborately. With `Redis <http://redis.io/topics/config>`_ 
+backend it's also recommended to set ``maxmemory-policy`` to ``volatile-lru``.
 
 
 Reviewed implementations
