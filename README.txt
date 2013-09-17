@@ -95,11 +95,11 @@ use the value from cache.
   Phil Karlton
 
 So it comes in a complex application. There's a case that certain group of methods operate the same
-data and it's impractical to invalidate individual entries. In particular, it often happens when a
-method returns complex values, spanning multiple entities. Cache tagging gives the possibility to mark
-this group of method result with a tag and invalidate at once.
+data and it's impractical to invalidate individual entries. In particular, it often happens when
+method returns complex values, spanning multiple entities. Cache tagging makes it possible to mark
+this group of method results with a tag and invalidate them all at once.
 
-Here's `the article <http://eflorenzano.com/blog/2009/03/02/tagging-cache-keys-o1-batch-invalidation/>`_
+Here's `article <http://eflorenzano.com/blog/2009/03/02/tagging-cache-keys-o1-batch-invalidation/>`_
 by Eric Florenzano which explains the idea. Let's look the code.
 
 .. code-block:: python
@@ -124,16 +124,16 @@ by Eric Florenzano which explains the idea. Let's look the code.
     #  }
  
 When we want to tag a cache entry, first we need to create the tag entries. Each tag is represented
-by a its own entry. Value of a tag entry is set to random value each time tag is created. Once all tags
+by its own entry. Value of tag entry is set to random value each time tag is created. Once all tags
 values exist, they are joined and hashed. Tag hash is added to cache entry key.
 
-Once we want to invalidate tagged entries we just need to remove the tag entry. Without any of tag value
+Once we want to invalidate tagged entries we just need to remove the tag entry. Without any of tag values
 tag hash was created with, it is impossible to construct the entry key so the tagged cache entries become
 inaccessible thus invalidated. As usually a feature built on-top of another feature adds complexity.
 
 Speed. All operations become O(n) where *n* is number of entry tags. However since we can
 rarely need more than a few dozens of tags, practically it is still O(1). Tag entry operations are batched
-so there're following implication on number of network operations:
+so the implications on number of network operations go as follow:
 
   * ``set`` – 3x backend calls (``get`` + 2 * ``set``) in worst case. Average is expected to be 2x when
     all used tag entries are created.
