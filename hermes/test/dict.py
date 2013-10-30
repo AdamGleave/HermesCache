@@ -421,7 +421,7 @@ class TestDictCustomMangler(TestDict):
       self.assertEqual('ateb+ahpla', self.fixture.simple('alpha', 'beta'))
       self.assertEqual(1, self.fixture.calls)
       self.assertEqual({
-        'hermes:entry:Fixture:simple:-1830972859' : 'ateb+ahpla'
+        'hermes:entry:Fixture:simple:5498827398669242949' : 'ateb+ahpla'
       }, self.testee.backend.dump())
     
     self.fixture.simple.invalidate('alpha', 'beta')
@@ -436,7 +436,7 @@ class TestDictCustomMangler(TestDict):
       self.assertEqual(expected, self.fixture.simple({'alpha' : ['beta']}, [{'gamma' : 'delta'}]))
       self.assertEqual(2, self.fixture.calls)
       self.assertEqual({
-        'hermes:entry:Fixture:simple:1069401124' : expected
+        'hermes:entry:Fixture:simple:-1807113385712696284' : expected
       }, self.testee.backend.dump())
     
     self.fixture.simple.invalidate({'alpha' : ['beta']}, [{'gamma' : 'delta'}])
@@ -456,7 +456,7 @@ class TestDictCustomMangler(TestDict):
       self.assertTrue(int(cache.pop('hermes:tag:rock')) != 0)
       self.assertTrue(int(cache.pop('hermes:tag:tree')) != 0)
       
-      expected = 'hermes:entry:Fixture:tagged:-1830972859'
+      expected = 'hermes:entry:Fixture:tagged:5498827398669242949'
       self.assertEqual(expected, ':'.join(cache.keys()[0].split(':')[:-1]))
       self.assertEqual('ae-hl', cache.values()[0])
     
@@ -521,7 +521,7 @@ class TestDictCustomMangler(TestDict):
     for _ in range(4):
       self.assertEqual('ateb+ahpla', foo('alpha', 'beta'))
       self.assertEqual(1, counter['foo'])
-      self.assertEqual({'hermes:entry:foo:-1830972859' : 'ateb+ahpla'}, self.testee.backend.dump())
+      self.assertEqual({'hermes:entry:foo:5498827398669242949' : 'ateb+ahpla'}, self.testee.backend.dump())
     
     foo.invalidate('alpha', 'beta')
     self.assertEqual(1,  counter['foo'])
@@ -623,12 +623,12 @@ class TestDictCustomMangler(TestDict):
     
     cache = self.testee.backend.dump()
     self.assertTrue(4, len(cache))
-    self.assertEqual('ateb+ahpla', cache.pop('hermes:entry:Fixture:simple:-1830972859'))
+    self.assertEqual('ateb+ahpla', cache.pop('hermes:entry:Fixture:simple:5498827398669242949'))
     self.assertFalse(cache.get('hermes:tag:tree') == cache.get('hermes:tag:rock'))
     self.assertTrue(int(cache.pop('hermes:tag:rock')) != 0)
     self.assertTrue(int(cache.pop('hermes:tag:tree')) != 0)
     
-    expected = 'hermes:entry:Fixture:tagged:-594928067'
+    expected = 'hermes:entry:Fixture:tagged:3606254630768090685'
     self.assertEqual(expected, ':'.join(cache.keys()[0].split(':')[:-1]))
     self.assertEqual('aldamg', cache.values()[0])
     
@@ -637,7 +637,7 @@ class TestDictCustomMangler(TestDict):
     
     cache = self.testee.backend.dump()
     self.assertTrue(3, len(cache))
-    self.assertEqual('ateb+ahpla', cache.pop('hermes:entry:Fixture:simple:-1830972859'))
+    self.assertEqual('ateb+ahpla', cache.pop('hermes:entry:Fixture:simple:5498827398669242949'))
     self.assertTrue(int(cache.pop('hermes:tag:tree')) != 0)
     self.assertFalse('hermes:tag:rock' in cache)
     
@@ -651,7 +651,7 @@ class TestDictCustomMangler(TestDict):
     
     cache = self.testee.backend.dump()
     self.assertTrue(4, len(cache))
-    self.assertEqual('ateb+ahpla', cache.pop('hermes:entry:Fixture:simple:-1830972859'))
+    self.assertEqual('ateb+ahpla', cache.pop('hermes:entry:Fixture:simple:5498827398669242949'))
     self.assertFalse(cache.get('hermes:tag:tree') == cache.get('hermes:tag:rock'))
     self.assertTrue(int(cache.pop('hermes:tag:rock')) != 0)
     self.assertTrue(int(cache.pop('hermes:tag:tree')) != 0)
@@ -664,7 +664,7 @@ class TestDictCustomMangler(TestDict):
     
     cache = self.testee.backend.dump()
     self.assertTrue(2, len(cache))
-    self.assertEqual('ateb+ahpla', cache.pop('hermes:entry:Fixture:simple:-1830972859'))
+    self.assertEqual('ateb+ahpla', cache.pop('hermes:entry:Fixture:simple:5498827398669242949'))
     self.assertFalse('hermes:tag:tree' in cache)
     self.assertFalse('hermes:tag:rock' in cache)
     
@@ -678,7 +678,7 @@ class TestDictCustomMangler(TestDict):
     
     cache = self.testee.backend.dump()
     self.assertTrue(4, len(cache))
-    self.assertEqual('ateb+ahpla', cache.pop('hermes:entry:Fixture:simple:-1830972859'))
+    self.assertEqual('ateb+ahpla', cache.pop('hermes:entry:Fixture:simple:5498827398669242949'))
     self.assertFalse(cache.get('hermes:tag:tree') == cache.get('hermes:tag:rock'))
     self.assertTrue(int(cache.pop('hermes:tag:rock')) != 0)
     self.assertTrue(int(cache.pop('hermes:tag:tree')) != 0)
@@ -696,8 +696,8 @@ class TestDictCustomMangler(TestDict):
     self.assertEqual('beta+alpha', self.fixture.nested('alpha', 'beta'))
     self.assertEqual(2, self.fixture.calls)
     self.assertEqual({
-      'hermes:entry:Fixture:nested:-1830972859': 'beta+alpha', 
-      'hermes:entry:Fixture:simple:-1020720887': 'ahpla+ateb'
+      'hermes:entry:Fixture:nested:5498827398669242949': 'beta+alpha', 
+      'hermes:entry:Fixture:simple:-4144140260472190711': 'ahpla+ateb'
     }, self.testee.backend.dump())
     
   def testConcurrent(self):
