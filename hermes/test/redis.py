@@ -381,7 +381,8 @@ class TestRedis(test.TestCase):
     map(threading.Thread.join,  threads)
     
     self.assertGreater(sum(log), 1, 'dogpile')
-    self.assertEqual(3, self.testee.backend.client.dbsize())
+    # enries may be duplicated if tags overwrite
+    self.assertGreaterEqual(self.testee.backend.client.dbsize(), 3)
     
     aTag = pickle.loads(self.testee.backend.client.get('cache:tag:a'))
     zTag = pickle.loads(self.testee.backend.client.get('cache:tag:z'))
