@@ -396,7 +396,9 @@ class TestMemcached(test.TestCase):
 class TestMemcachedLock(test.TestCase):
   
   def setUp(self):
-    cache       = hermes.Hermes(hermes.backend.memcached.Backend) 
+    cache = hermes.Hermes(hermes.backend.memcached.Backend)
+    cache.clean()
+    
     self.testee = hermes.backend.memcached.Lock('123', cache.backend.client)
   
   def testAcquire(self):

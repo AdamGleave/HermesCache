@@ -398,7 +398,9 @@ class TestRedis(test.TestCase):
 class TestRedisLock(test.TestCase):
   
   def setUp(self):
-    cache       = hermes.Hermes(hermes.backend.redis.Backend) 
+    cache = hermes.Hermes(hermes.backend.redis.Backend)
+    cache.clean()
+     
     self.testee = hermes.backend.redis.Lock('123', cache.backend.client)
   
   def testAcquire(self):
