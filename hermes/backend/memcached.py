@@ -24,7 +24,8 @@ class Lock(AbstractLock):
   '''Memcached client'''
   
   timeout = 900
-  '''Maximum TTL of lock'''
+  '''Maximum TTL of lock, can be up to 30 days, 
+  otherwise memcached will treated it as a unix timestamp of an exact date'''
   
   sleep = 0.1
   '''Amount of time to sleep per ``while True`` iteration when waiting'''
