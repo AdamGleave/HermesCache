@@ -408,7 +408,8 @@ class TestRedisLock(test.TestCase):
       try:
         self.assertTrue(self.testee.acquire(True))
         self.assertFalse(self.testee.acquire(False))
-        self.assertEqual('123', self.testee._lock.name)
+        self.assertEqual('123', self.testee.key)
+        self.assertEqual(900, self.testee.client.ttl(self.testee.key))
       finally:
         self.testee.release()
 
@@ -417,21 +418,22 @@ class TestRedisLock(test.TestCase):
       try:
         self.assertTrue(self.testee.acquire(True))
         self.assertFalse(self.testee.acquire(False))
-        self.assertEqual('123', self.testee._lock.name)
+        self.assertEqual('123', self.testee.key)
       finally:
         self.testee.release()
+        self.assertIs(None, self.testee.client.get(self.testee.key))
     
   def testWith(self):
     with self.testee:
       self.assertFalse(self.testee.acquire(False))
-      self.assertEqual('123', self.testee._lock.name)
+      self.assertEqual('123', self.testee.key)
       
       client  = hermes.backend.redis.Backend(hermes.Mangler()).client
       another = hermes.backend.redis.Lock('234', client)
       with another:
         self.assertFalse(another.acquire(False))
         self.assertFalse(self.testee.acquire(False))
-        self.assertEqual('234', another._lock.name)
+        self.assertEqual('234', another.key)
       
   def testConcurrent(self):
     log   = []

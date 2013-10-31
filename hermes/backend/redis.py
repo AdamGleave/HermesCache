@@ -3,6 +3,7 @@
 '''
 
 
+import time
 import importlib
 redis = importlib.import_module('redis')
 
@@ -15,21 +16,38 @@ __all__ = 'Lock', 'Backend'
 class Lock(AbstractLock):
   '''Key-aware distrubuted lock'''
   
-  _lock = None
-  '''Redis lock instance'''  
+  client = None
+  '''Redis client'''
+  
+  timeout = 900
+  '''Maximum TTL of lock'''
+  
+  sleep = 0.1
+  '''Amount of time to sleep per ``while True`` iteration when waiting'''
   
   
   def __init__(self, key, client, **kwargs):
-    self._lock = client.lock(key, **{
-      'timeout' : kwargs.get('lockTimeout', 900),
-      'sleep'   : kwargs.get('lockSleep',   0.1)
-    })
+    super(Lock, self).__init__(key)
+    
+    self.client = client
+    
+    self.sleep   = kwargs.get('lockSleep',   self.sleep)
+    self.timeout = kwargs.get('lockTimeout', self.timeout)
+    if self.timeout is None:
+      self.timeout = 0
 
   def acquire(self, wait = True):
-    return self._lock.acquire(wait)
+    while True:
+      if self.client.setnx(self.key, 'locked'):
+        self.client.expire(self.key, self.timeout)
+        return True
+      elif not wait:
+        return False
+      else:
+        time.sleep(self.sleep)
 
   def release(self):
-    self._lock.release()
+    self.client.delete(self.key)
 
 
 class Backend(AbstractBackend):
