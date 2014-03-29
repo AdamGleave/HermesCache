@@ -6,6 +6,8 @@
 import unittest
 import types
 
+import hermes.backend
+
 
 class TestCase(unittest.TestCase):
 
@@ -37,6 +39,8 @@ def createFixture(cache):
     
     @cache
     def simple(self, a, b):
+      '''Here be dragons... seriously just a docstring test'''
+      
       self.calls += 1
       return '{0}+{1}'.format(a, b)[::-1]
     
@@ -168,3 +172,30 @@ class TestReadme(unittest.TestCase):
     #    'cache:entry:foo:a1c97600eac6febb:8e7e24cf70c1f0ab': 4, 
     #    'cache:entry:foo:a1c97600eac6febb:5cae80f5e7d58329': 4
     #  }
+
+
+class TestWrappedDoc(unittest.TestCase):
+  
+  testee = None
+  
+  
+  def setUp(self):
+    self.testee = hermes.Hermes(hermes.backend.AbstractBackend) 
+  
+  def testFunction(self):
+    
+    @self.testee
+    def foo(a, b):
+      '''Overwhelmed everyone would be...'''
+      
+      return a * b
+    
+    self.assertEqual('foo', foo.__name__)
+    self.assertEqual('Overwhelmed everyone would be...', foo.__doc__)
+  
+  def testMethod(self):
+    fixture = createFixture(self.testee)
+    
+    self.assertEqual('simple', fixture.simple.__name__)
+    self.assertEqual('Here be dragons... seriously just a docstring test', fixture.simple.__doc__)
+

@@ -189,6 +189,8 @@ class Cached(object):
     self._ttl      = ttl
     self._keyFunc  = kwargs.get('key', self._mangler.nameEntry)
     self._tags     = kwargs.get('tags', None)
+    # preserve ``__name__``, ``__doc__``, etc for ``types.FunctionType`` case 
+    functools.update_wrapper(self, fn)
   
   def _load(self, key):
     if self._tags:
@@ -255,5 +257,8 @@ class Cached(object):
     # however the following is more convinient.
     result            = functools.partial(self.__call__,   instance)
     result.invalidate = functools.partial(self.invalidate, instance)
+    
+    # preserve ``__name__``, ``__doc__``, etc for ``types.MethodType`` case 
+    functools.update_wrapper(result, self._callable)
     
     return result
