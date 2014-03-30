@@ -59,12 +59,12 @@ def createFixture(cache):
       self.calls += 1
       return '{0}%{1}'.format(a, b)[::-2]
     
-    @cache(tags = ('ash', 'stone'), key = lambda fn, *args, **kwargs: 'mykey:{0}:{1}'.format(*args[1:]))
+    @cache(tags = ('ash', 'stone'), key = lambda fn, *args, **kwargs: 'mykey:{0}:{1}'.format(*args))
     def key(self, a, b):
       self.calls += 1
       return '{0}*{1}'.format(a, b)[::2]
     
-    @cache(tags = ('a', 'z'), key = lambda fn, *a: 'mk:{0}:{1}'.format(*a[1:]).replace(' ', ''), ttl = 1200)
+    @cache(tags = ('a', 'z'), key = lambda fn, *a: 'mk:{0}:{1}'.format(*a).replace(' ', ''), ttl = 1200)
     def all(self, a, b):
       self.calls += 1
       return {'a' : a['alpha'], 'b' : {'b' : b[0]}}
@@ -90,7 +90,7 @@ class TestReadme(unittest.TestCase):
       def bar(self, a, b):
         return a ** b
         
-      @cache(tags = ('math', 'avg'), key = lambda fn, *args, **kwargs: 'avg:{0}:{1}'.format(*args[1:]))
+      @cache(tags = ('math', 'avg'), key = lambda fn, *args, **kwargs: 'avg:{0}:{1}'.format(*args))
       def baz(self, a, b):
         return (a + b) / 2.0
 
@@ -174,13 +174,13 @@ class TestReadme(unittest.TestCase):
     #  }
 
 
-class TestWrappedDoc(unittest.TestCase):
+class TestWrapping(unittest.TestCase):
   
   testee = None
   
   
   def setUp(self):
-    self.testee = hermes.Hermes(hermes.backend.AbstractBackend) 
+    self.testee = hermes.Hermes() 
   
   def testFunction(self):
     
@@ -190,12 +190,14 @@ class TestWrappedDoc(unittest.TestCase):
       
       return a * b
     
+    self.assertTrue(isinstance(foo, hermes.Cached))
     self.assertEqual('foo', foo.__name__)
     self.assertEqual('Overwhelmed everyone would be...', foo.__doc__)
   
   def testMethod(self):
     fixture = createFixture(self.testee)
     
+    self.assertTrue(isinstance(fixture.simple, hermes.Cached))
     self.assertEqual('simple', fixture.simple.__name__)
     self.assertEqual('Here be dragons... seriously just a docstring test', fixture.simple.__doc__)
 

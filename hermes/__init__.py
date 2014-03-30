@@ -39,7 +39,7 @@ class Mangler(object):
     result = [self.prefix, 'entry']
     args   = list(args)
     if isinstance(fn, types.MethodType):
-      result.extend([args.pop(0).__class__.__name__, fn.__name__])
+      result.extend([fn.__self__.__class__.__name__, fn.__name__])
     elif isinstance(fn, types.FunctionType):
       result.append(fn.__name__)
     else:
@@ -164,12 +164,9 @@ class Cached(object):
   _mangler = None
   '''Key manager responsible for creating keys, hashing and serialzing values'''
   
-  _fn = None
-  '''This is always a decorated callable of ``types.FunctionType`` type'''
-  
   _callable = None
-  '''This value stays ``types.FunctionType`` if a function is decorated, otherwise it is 
-  transformed to ``types.MethodType`` by descriptor protocol implementation'''
+  '''The decorated callable, stays ``types.FunctionType`` if a function is decorated, 
+  otherwise it is transformed to ``types.MethodType`` by descriptor protocol implementation'''
   
   _ttl = None
   '''Cache entry Time To Live for decarated callable'''
@@ -181,16 +178,15 @@ class Cached(object):
   '''Cache entry tags for decarated callable'''
   
   
-  def __init__(self, backend, mangler, ttl, fn, **kwargs):
+  def __init__(self, backend, mangler, ttl, callable, **kwargs):
     self._backend  = backend
     self._mangler  = mangler
-    self._fn       = fn
-    self._callable = fn
+    self._callable = callable
     self._ttl      = ttl
     self._keyFunc  = kwargs.get('key', self._mangler.nameEntry)
     self._tags     = kwargs.get('tags', None)
-    # preserve ``__name__``, ``__doc__``, etc for ``types.FunctionType`` case 
-    functools.update_wrapper(self, fn)
+    # preserve ``__name__``, ``__doc__``, etc
+    functools.update_wrapper(self, callable)
   
   def _load(self, key):
     if self._tags:
@@ -238,27 +234,38 @@ class Cached(object):
         # it's better to read twice than lock every read
         value = self._load(key)
         if value is None:
-          value = self._fn(*args, **kwargs)
+          value = self._callable(*args, **kwargs)
           self._save(key, value)
     return value
   
-  def __get__(self, instance, owner):
-    '''Implements descriptor protocol'''
+  def __get__(self, instance, type):
+    '''Implements a non-data descriptor protocol.
     
-    # This happens only when instance method is decorated, so we can
-    # surely distinguish between decorated ``types.MethodType`` and
-    # ``types.FunctionType``. Python class declaration mechanics prevent 
-    # a decorator from having awareness of the class type, as the 
-    # function is received by the decorator before it becomes an 
-    # instance method.
-    self._callable = types.MethodType(self._fn, instance, owner)
+    The invocation happens only when instance method is decorated, so  we can distinguish 
+    between decorated ``types.MethodType`` and ``types.FunctionType``. Python class 
+    declaration mechanics prevent a decorator from having awareness of the class type, as 
+    the function is received by the decorator before it becomes an instance method.
     
-    # Intance can also be calculated through self._callable.__self__, 
-    # however the following is more convinient.
-    result            = functools.partial(self.__call__,   instance)
-    result.invalidate = functools.partial(self.invalidate, instance)
+    How it works::
+     
+      cache = hermes.Hermes()
+      
+      class Model:
+      
+        @cache
+        def calc(self):
+          return 42 
+      
+      m = Model()
+      m.calc
+      
+    Last attribute access results in the call, ``calc.__get__(calc, m, Model)``, where 
+    ``calc`` is instance of ``hermes.Cashed`` which decorates the original ``Model.cacl``.
     
-    # preserve ``__name__``, ``__doc__``, etc for ``types.MethodType`` case 
-    functools.update_wrapper(result, self._callable)
+    For more details, http://docs.python.org/2/howto/descriptor.html#descriptor-protocol
+    '''
+
+    if not isinstance(self._callable, types.MethodType):
+      self._callable = types.MethodType(self._callable, instance, type)
     
-    return result
+    return self
