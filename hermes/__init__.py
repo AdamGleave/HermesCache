@@ -85,7 +85,7 @@ class Hermes(object):
         def bar(self, a, b):
           return a ** b
           
-        @cache(tags = ('math', 'avg'), key = lambda fn, *args, **kwargs: 'avg:{0}:{1}'.format(*args[1:]))
+        @cache(tags = ('math', 'avg'), key = lambda fn, *args, **kwargs: 'avg:{0}:{1}'.format(*args))
         def baz(self, a, b):
           return (a + b) / 2.0
   
