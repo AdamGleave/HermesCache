@@ -260,7 +260,7 @@ class Cached(object):
       m.calc
       
     Last attribute access results in the call, ``calc.__get__(calc, m, Model)``, where 
-    ``calc`` is instance of ``hermes.Cashed`` which decorates the original ``Model.cacl``.
+    ``calc`` is instance of ``hermes.Cashed`` which decorates the original ``Model.calc``.
     
     For more details, http://docs.python.org/2/howto/descriptor.html#descriptor-protocol
     '''
