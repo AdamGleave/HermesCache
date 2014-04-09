@@ -7,13 +7,14 @@ import types
 import hashlib
 import functools
 import os
+import binascii
 
 try:
   import cPickle as pickle
 except ImportError:
   import pickle
 
-from backend import AbstractBackend
+from .backend import AbstractBackend
 
 
 __all__ = 'Hermes', 'Mangler'
@@ -37,15 +38,14 @@ class Mangler(object):
   
   def nameEntry(self, fn, *args, **kwargs):
     result = [self.prefix, 'entry']
-    args   = list(args)
     if isinstance(fn, types.MethodType):
       result.extend([fn.__self__.__class__.__name__, fn.__name__])
     elif isinstance(fn, types.FunctionType):
       result.append(fn.__name__)
     else:
       raise TypeError('Fn is expected to be insance of MethodType or FunctionType')
-    
-    arguments = args, tuple(sorted(kwargs.items()))  
+
+    arguments = args, tuple(sorted(kwargs.items()))
     result.append(self.hash(self.dumps(arguments))) 
     
     return ':'.join(result)
@@ -54,11 +54,12 @@ class Mangler(object):
     return u':'.join([self.prefix, 'tag', tag]) 
 
   def mapTags(self, tagKeys):
-    return {key : self.hash(u':'.join((key, os.urandom(4).encode('hex')))) for key in tagKeys}
+    hash = binascii.hexlify(os.urandom(4)).decode('ascii')
+    return {key : self.hash(u':'.join((key, hash)).encode('utf8')) for key in tagKeys}
 
   def hashTags(self, tagMap):
-    values = map(lambda (k, v): v, sorted(tagMap.items()))
-    return self.hash(':'.join(values))
+    values = tuple(zip(*sorted(tagMap.items())))[1] # sorted by key dict values
+    return self.hash(u':'.join(values).encode('utf8'))
   
   def nameLock(self, entryKey):
     parts = entryKey.split(':')
@@ -90,11 +91,11 @@ class Hermes(object):
           return (a + b) / 2.0
   
             
-      print foo(2, 333)
+      print(foo(2, 333))
       
       example = Example()
-      print example.bar(2, 10)
-      print example.baz(2, 10)
+      print(example.bar(2, 10))
+      print(example.baz(2, 10))
           
       foo.invalidate(2, 333)
       example.bar.invalidate(2, 10)
@@ -200,7 +201,7 @@ class Cached(object):
   
   def _save(self, key, value):
     if self._tags:
-      namedTags   = map(self._mangler.nameTag, self._tags)
+      namedTags   = tuple(map(self._mangler.nameTag, self._tags))
       tagMap      = self._backend.load(namedTags)
       missingTags = set(namedTags) - set(tagMap.keys())
       if missingTags:
@@ -264,8 +265,13 @@ class Cached(object):
     
     For more details, http://docs.python.org/2/howto/descriptor.html#descriptor-protocol
     '''
-
+    
     if not isinstance(self._callable, types.MethodType):
-      self._callable = types.MethodType(self._callable, instance, type)
+      try:
+        self._callable = types.MethodType(self._callable, instance, type)
+      except TypeError:
+        # python3 compatibility
+        self._callable = types.MethodType(self._callable, instance)
     
     return self
+
