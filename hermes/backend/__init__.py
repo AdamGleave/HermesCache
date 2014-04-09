@@ -36,13 +36,19 @@ class AbstractBackend(object):
   mangler = None
   '''Key manager responsible for creating keys, hashing and serialzation'''
   
+  try:
+    __str = basestring  # @UndefinedVariable
+  except NameError:
+    __str = str
+  '''Python 2/3 compatible base string type'''
+
 
   def __init__(self, mangler, **kwargs):
     self.mangler = mangler
     
-  @staticmethod
-  def _isScalar(value):
-    return not isinstance(value, collections.Iterable) or isinstance(value, basestring)
+  @classmethod
+  def _isScalar(cls, value):
+    return not isinstance(value, collections.Iterable) or isinstance(value, cls.__str)
 
   def lock(self, key):
     return AbstractLock(self.mangler.nameLock(key))
@@ -61,3 +67,4 @@ class AbstractBackend(object):
   
   def clean(self):
     pass
+
