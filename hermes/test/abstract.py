@@ -21,7 +21,7 @@ class TestAbstract(test.TestCase):
   def testSimple(self):
     self.assertEqual(0, self.fixture.calls)
     
-    self.assertEqual('ateb+ahpla', self.fixture.simple('alpha', 'beta'))
+    self.assertEqual('ateb+ahpla', self.fixture.simple('alpha', b = 'beta'))
     self.assertEqual(1, self.fixture.calls)
     
     self.assertEqual('ateb+ahpla', self.fixture.simple('alpha', 'beta'))
@@ -30,7 +30,7 @@ class TestAbstract(test.TestCase):
   def testTagged(self):
     self.assertEqual(0,  self.fixture.calls)
     
-    self.assertEqual('ae-hl', self.fixture.tagged('alpha', 'beta'))
+    self.assertEqual('ae-hl', self.fixture.tagged('alpha', b = 'beta'))
     self.assertEqual(1,       self.fixture.calls)
     
     self.assertEqual('ae-hl', self.fixture.tagged('alpha', 'beta'))

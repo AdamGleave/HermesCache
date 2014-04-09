@@ -26,16 +26,16 @@ class TestRedis(test.TestCase):
     self.assertEqual(0, self.fixture.calls)
     self.assertEqual(0, self.testee.backend.client.dbsize())
 
-    key = 'cache:entry:Fixture:simple:' + self._arghash('alpha', 'beta')
+    key = 'cache:entry:Fixture:simple:' + self._arghash('alpha', b = 'beta')
     for _ in range(4):    
-      self.assertEqual('ateb+ahpla', self.fixture.simple('alpha', 'beta'))
+      self.assertEqual('ateb+ahpla', self.fixture.simple('alpha', b = 'beta'))
       self.assertEqual(1, self.fixture.calls)
       self.assertEqual(1, self.testee.backend.client.dbsize())
   
       self.assertEqual(360, self.testee.backend.client.ttl(key))
       self.assertEqual('ateb+ahpla', pickle.loads(self.testee.backend.client.get(key)))
     
-    self.fixture.simple.invalidate('alpha', 'beta')
+    self.fixture.simple.invalidate('alpha', b = 'beta')
     self.assertEqual(0, self.testee.backend.client.dbsize())
     
     
@@ -63,7 +63,7 @@ class TestRedis(test.TestCase):
     self.assertEqual(0, self.testee.backend.client.dbsize())
     
     for _ in range(4):    
-      self.assertEqual('ae-hl', self.fixture.tagged('alpha', 'beta'))
+      self.assertEqual('ae-hl', self.fixture.tagged('alpha', b = 'beta'))
       self.assertEqual(1,       self.fixture.calls)
       self.assertEqual(3,       self.testee.backend.client.dbsize())
       
@@ -75,13 +75,13 @@ class TestRedis(test.TestCase):
       self.assertEqual(16, len(rockTag))
       self.assertEqual(16, len(treeTag))
       
-      argHash = self._arghash('alpha', 'beta')
+      argHash = self._arghash('alpha', b = 'beta')
       tagHash = self.testee.mangler.hashTags(dict(tree = treeTag, rock = rockTag))
       key     = 'cache:entry:Fixture:tagged:{0}:{1}'.format(argHash, tagHash)
       self.assertEqual(360, self.testee.backend.client.ttl(key))
       self.assertEqual('ae-hl', pickle.loads(self.testee.backend.client.get(key)))
     
-    self.fixture.tagged.invalidate('alpha', 'beta')
+    self.fixture.tagged.invalidate('alpha', b = 'beta')
     
     self.assertEqual(2, self.testee.backend.client.dbsize())
     

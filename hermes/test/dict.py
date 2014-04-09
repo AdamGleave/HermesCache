@@ -24,13 +24,13 @@ class TestDict(test.TestCase):
     self.assertEqual({}, self.testee.backend.dump())
     
     for _ in range(4):
-      self.assertEqual('ateb+ahpla', self.fixture.simple('alpha', 'beta'))
+      self.assertEqual('ateb+ahpla', self.fixture.simple('alpha', b = 'beta'))
       self.assertEqual(1, self.fixture.calls)
       self.assertEqual({
-        'cache:entry:Fixture:simple:' + self._arghash('alpha', 'beta') : 'ateb+ahpla'
+        'cache:entry:Fixture:simple:' + self._arghash('alpha', b = 'beta') : 'ateb+ahpla'
       }, self.testee.backend.dump())
     
-    self.fixture.simple.invalidate('alpha', 'beta')
+    self.fixture.simple.invalidate('alpha', b = 'beta')
     self.assertEqual({}, self.testee.backend.dump())
 
     
@@ -64,7 +64,7 @@ class TestDict(test.TestCase):
     self.assertEqual({}, self.testee.backend.dump())
     
     for _ in range(4):
-      self.assertEqual('ae-hl', self.fixture.tagged('alpha', 'beta'))
+      self.assertEqual('ae-hl', self.fixture.tagged('alpha', b = 'beta'))
       self.assertEqual(1,       self.fixture.calls)
       
       cache = self.testee.backend.dump()
@@ -72,12 +72,12 @@ class TestDict(test.TestCase):
       self.assertEqual(16, len(cache.pop('cache:tag:rock')))
       self.assertEqual(16, len(cache.pop('cache:tag:tree')))
       
-      expected = 'cache:entry:Fixture:tagged:' + self._arghash('alpha', 'beta')
+      expected = 'cache:entry:Fixture:tagged:' + self._arghash('alpha', b = 'beta')
       self.assertEqual(expected, ':'.join(tuple(cache.keys())[0].split(':')[:-1]))
       self.assertEqual('ae-hl', tuple(cache.values())[0])
     
     
-    self.fixture.tagged.invalidate('alpha', 'beta')
+    self.fixture.tagged.invalidate('alpha', b = 'beta')
     
     cache = self.testee.backend.dump()
     self.assertEqual(2, len(cache))
