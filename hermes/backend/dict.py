@@ -68,10 +68,12 @@ class Backend(AbstractBackend):
     if self._isScalar(keys):
       keys = (keys,)
       
-    map(lambda key: self.cache.pop(key, None), keys)
+    for key in keys:
+      self.cache.pop(key, None)  
 
   def clean(self):
     self.cache.clear()
     
   def dump(self):
     return {k : self.mangler.loads(v) for k, v in self.cache.items()}
+
