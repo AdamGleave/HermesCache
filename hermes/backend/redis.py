@@ -95,6 +95,7 @@ class Backend(AbstractBackend):
         value = self.mangler.loads(value)
       return value
     else:
+      keys = tuple(keys) # py3 compat
       return {k : self.mangler.loads(v) for k, v in zip(keys, self.client.mget(keys)) if v is not None}
   
   def remove(self, keys):
@@ -105,3 +106,4 @@ class Backend(AbstractBackend):
 
   def clean(self):
     self.client.flushdb()
+
