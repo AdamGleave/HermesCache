@@ -26,7 +26,7 @@ class TestRedis(test.TestCase):
     self.assertEqual(0, self.fixture.calls)
     self.assertEqual(0, self.testee.backend.client.dbsize())
 
-    key = 'cache:entry:Fixture:simple:109cc9a8853ebcb1'
+    key = 'cache:entry:Fixture:simple:' + self._arghash('alpha', 'beta')
     for _ in range(4):    
       self.assertEqual('ateb+ahpla', self.fixture.simple('alpha', 'beta'))
       self.assertEqual(1, self.fixture.calls)
@@ -39,15 +39,24 @@ class TestRedis(test.TestCase):
     self.assertEqual(0, self.testee.backend.client.dbsize())
     
     
-    expected = "])]'ammag'[(tes[+}]'ateb'[ :'ahpla'{"
-    key      = 'cache:entry:Fixture:simple:1791fb72b0c00b29'
+    expectedPy2 = "])]'ammag'[(tes[+}]'ateb'[ :'ahpla'{"
+    expectedPy3 = "]}'ammag'{[+}]'ateb'[ :'ahpla'{"
+    key         = 'cache:entry:Fixture:simple:' + self._arghash({'alpha' : ['beta']}, [{'gamma'}])
     for _ in range(4): 
-      self.assertEqual(expected, self.fixture.simple({'alpha' : ['beta']}, [{'gamma'}]))
+      try:
+        self.assertEqual(expectedPy2, self.fixture.simple({'alpha' : ['beta']}, [{'gamma'}]))
+      except AssertionError:
+        self.assertEqual(expectedPy3, self.fixture.simple({'alpha' : ['beta']}, [{'gamma'}]))
+        
       self.assertEqual(2, self.fixture.calls)
       self.assertEqual(1, self.testee.backend.client.dbsize())
   
       self.assertEqual(360, self.testee.backend.client.ttl(key))
-      self.assertEqual(expected, pickle.loads(self.testee.backend.client.get(key)))
+      
+      try:
+        self.assertEqual(expectedPy2, pickle.loads(self.testee.backend.client.get(key)))
+      except AssertionError:
+        self.assertEqual(expectedPy3, pickle.loads(self.testee.backend.client.get(key)))
     
   def testTagged(self):
     self.assertEqual(0, self.fixture.calls)
@@ -66,8 +75,9 @@ class TestRedis(test.TestCase):
       self.assertEqual(16, len(rockTag))
       self.assertEqual(16, len(treeTag))
       
+      argHash = self._arghash('alpha', 'beta')
       tagHash = self.testee.mangler.hashTags(dict(tree = treeTag, rock = rockTag))
-      key     = 'cache:entry:Fixture:tagged:109cc9a8853ebcb1:' + tagHash
+      key     = 'cache:entry:Fixture:tagged:{0}:{1}'.format(argHash, tagHash)
       self.assertEqual(360, self.testee.backend.client.ttl(key))
       self.assertEqual('ae-hl', pickle.loads(self.testee.backend.client.get(key)))
     
@@ -127,7 +137,7 @@ class TestRedis(test.TestCase):
     self.assertEqual(0, counter['foo'])
     self.assertEqual(0, self.testee.backend.client.dbsize())
     
-    key = 'cache:entry:foo:109cc9a8853ebcb1'
+    key = 'cache:entry:foo:' + self._arghash('alpha', 'beta')
     for _ in range(4):
       self.assertEqual('ateb+ahpla', foo('alpha', 'beta'))
       
@@ -206,7 +216,7 @@ class TestRedis(test.TestCase):
   def testAll(self):
     self.assertEqual(0, self.fixture.calls)
     self.assertEqual(0, self.testee.backend.client.dbsize())
-    for _ in range(4):    
+    for _ in range(4):
       self.assertEqual({'a': 1, 'b': {'b': 'beta'}}, self.fixture.all({'alpha' : 1}, ['beta']))
       self.assertEqual(1, self.fixture.calls)
       self.assertEqual(3, self.testee.backend.client.dbsize())
@@ -254,7 +264,7 @@ class TestRedis(test.TestCase):
     self.assertEqual(2,            self.fixture.calls)
     self.assertEqual(4,            self.testee.backend.client.dbsize())
 
-    simpleKey = 'cache:entry:Fixture:simple:109cc9a8853ebcb1'
+    simpleKey = 'cache:entry:Fixture:simple:' + self._arghash('alpha', 'beta')
     self.assertEqual('ateb+ahpla', pickle.loads(self.testee.backend.client.get(simpleKey)))
     
     rockTag = pickle.loads(self.testee.backend.client.get('cache:tag:rock'))
@@ -263,8 +273,9 @@ class TestRedis(test.TestCase):
     self.assertEqual(16, len(rockTag))
     self.assertEqual(16, len(treeTag))
     
+    argHash   = self._arghash('gamma', 'delta')
     tagHash   = self.testee.mangler.hashTags(dict(tree = treeTag, rock = rockTag))
-    taggedKey = 'cache:entry:Fixture:tagged:57f6833d90ca8fcb:' + tagHash
+    taggedKey = 'cache:entry:Fixture:tagged:{0}:{1}'.format(argHash, tagHash)
     self.assertEqual('aldamg', pickle.loads(self.testee.backend.client.get(taggedKey)))
     
     
@@ -296,8 +307,9 @@ class TestRedis(test.TestCase):
     # stale still accessible, though only directly
     self.assertEqual('aldamg', pickle.loads(self.testee.backend.client.get(taggedKey)))
     
+    argHash   = self._arghash('gamma', 'delta')
     tagHash   = self.testee.mangler.hashTags(dict(tree = treeTag, rock = rockTag))
-    taggedKey = 'cache:entry:Fixture:tagged:57f6833d90ca8fcb:' + tagHash
+    taggedKey = 'cache:entry:Fixture:tagged:{0}:{1}'.format(argHash, tagHash)
     self.assertEqual('aldamg', pickle.loads(self.testee.backend.client.get(taggedKey)))
     
     
@@ -329,8 +341,9 @@ class TestRedis(test.TestCase):
     self.assertEqual(16, len(rockTag))
     self.assertEqual(16, len(treeTag))
     
+    argHash   = self._arghash('gamma', 'delta')
     tagHash   = self.testee.mangler.hashTags(dict(tree = treeTag, rock = rockTag))
-    taggedKey = 'cache:entry:Fixture:tagged:57f6833d90ca8fcb:' + tagHash
+    taggedKey = 'cache:entry:Fixture:tagged:{0}:{1}'.format(argHash, tagHash)
     self.assertEqual('aldamg', pickle.loads(self.testee.backend.client.get(taggedKey)))
     
     
@@ -341,9 +354,9 @@ class TestRedis(test.TestCase):
   def testNested(self):
     self.assertEqual('beta+alpha', self.fixture.nested('alpha', 'beta'))
     self.assertEqual(2, self.fixture.calls)
-    key = 'cache:entry:Fixture:nested:109cc9a8853ebcb1'
+    key = 'cache:entry:Fixture:nested:' + self._arghash('alpha', 'beta')
     self.assertEqual('beta+alpha', pickle.loads(self.testee.backend.client.get(key)))
-    key = 'cache:entry:Fixture:simple:304d56b9ab021ab2'
+    key = 'cache:entry:Fixture:simple:' +  self._arghash('beta', 'alpha')
     self.assertEqual('ahpla+ateb', pickle.loads(self.testee.backend.client.get(key)))
     
   def testConcurrent(self):
@@ -355,9 +368,9 @@ class TestRedis(test.TestCase):
       time.sleep(0.04)
       return '{0}-{1}'.format(a, b)[::2]
     
-    threads = map(lambda i: threading.Thread(target = bar, args = ('alpha', 'beta')), range(4))
-    map(threading.Thread.start, threads)
-    map(threading.Thread.join,  threads)
+    threads = tuple(map(lambda i: threading.Thread(target = bar, args = ('alpha', 'beta')), range(4)))
+    tuple(map(threading.Thread.start, threads))
+    tuple(map(threading.Thread.join,  threads))
     
     self.assertEqual(1, sum(log))
     self.assertEqual(3, self.testee.backend.client.dbsize())
@@ -376,9 +389,9 @@ class TestRedis(test.TestCase):
     self.testee.clean()
     self.testee.backend.lock = lambda k: hermes.backend.AbstractLock(k) # now see a dogpile 
     
-    threads = map(lambda i: threading.Thread(target = bar, args = ('alpha', 'beta')), range(4))
-    map(threading.Thread.start, threads)
-    map(threading.Thread.join,  threads)
+    threads = tuple(map(lambda i: threading.Thread(target = bar, args = ('alpha', 'beta')), range(4)))
+    tuple(map(threading.Thread.start, threads))
+    tuple(map(threading.Thread.join,  threads))
     
     self.assertGreater(sum(log), 1, 'dogpile')
     # enries may be duplicated if tags overwrite
@@ -445,8 +458,9 @@ class TestRedisLock(test.TestCase):
         check.release()
         time.sleep(0.05)
     
-    threads = map(lambda i: threading.Thread(target = target), range(4))
-    map(threading.Thread.start, threads)
-    map(threading.Thread.join,  threads)
+    threads = tuple(map(lambda i: threading.Thread(target = target), range(4)))
+    tuple(map(threading.Thread.start, threads))
+    tuple(map(threading.Thread.join,  threads))
     
     self.assertEqual([True] * 4, log)
+
