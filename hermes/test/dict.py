@@ -426,8 +426,8 @@ class TestDictCustomMangler(TestDict):
     self.testee.clean()
   
   def _arghash(self, *args, **kwargs):
-    '''Not very neat as it penetrates into an implementation detail, though otherwise as
-    it'll be harder to make assertion on keys, because hash results are different on py2 and py3
+    '''Not very neat as it penetrates into an implementation detail, though otherwise it'll 
+    be harder to make assertion on keys, because hash results are different on py2 and py3
     and their 32/64-bit builds'''
     
     arguments = args, tuple(sorted(kwargs.items()))

@@ -36,8 +36,8 @@ class TestCase(unittest.TestCase):
     self.assertEqual(0, len(diff), 'Test case misses: {0}'.format(', '.join(diff)))
     
   def _arghash(self, *args, **kwargs):
-    '''Not very neat as it penetrates into an implementation detail, though otherwise as
-    it'll be harder to make assertion on keys, because pickled results are different on py2 and py3'''
+    '''Not very neat as it penetrates into an implementation detail, though otherwise it'll be
+    harder to make assertion on keys, because pickled results are different on py2 and py3'''
     
     arguments = args, tuple(sorted(kwargs.items()))
     return hashlib.md5(pickle.dumps(arguments, protocol = pickle.HIGHEST_PROTOCOL)).hexdigest()[::2]
