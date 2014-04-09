@@ -42,11 +42,11 @@ The following demonstrates all end-user API.
         return (a + b) / 2.0
 
           
-    print foo(2, 333)
+    print(foo(2, 333))
     
     example = Example()
-    print example.bar(2, 10)
-    print example.baz(2, 10)
+    print(example.bar(2, 10))
+    print(example.baz(2, 10))
         
     foo.invalidate(2, 333)
     example.bar.invalidate(2, 10)
@@ -77,7 +77,7 @@ First let's look how basic caching works.
     foo(2, 2)
     foo(2, 4)
     
-    print cache.backend.dump() 
+    print(cache.backend.dump()) 
     #  {
     #    'cache:entry:foo:515d5cb1a98de31d': 8, 
     #    'cache:entry:foo:a1c97600eac6febb': 4
@@ -114,7 +114,7 @@ by Eric Florenzano which explains the idea. Let's look the code.
     
     foo(2, 2)
     
-    print cache.backend.dump() 
+    print(cache.backend.dump()) 
     #  {
     #    u'cache:tag:tag1': '0674536f9eb4eb19', 
     #    u'cache:tag:tag2': 'db22b5ab2e504895', 
@@ -154,7 +154,7 @@ Memory overhead consists of tag entries and stale cache entries. Demonstrated be
     
     foo(2, 2)
     
-    print cache.backend.dump()
+    print(cache.backend.dump())
     #  {
     #    u'cache:tag:tag1': '047820ac777abe8a', 
     #    u'cache:tag:tag2': '126365ec7175e851', 
@@ -164,7 +164,7 @@ Memory overhead consists of tag entries and stale cache entries. Demonstrated be
     cache.clean(['tag1'])
     foo(2, 2)
     
-    print cache.backend.dump() 
+    print(cache.backend.dump()) 
     #  {
     #    u'cache:tag:tag1': '66336fec212def16',  ← recreated tag entry
     #    u'cache:tag:tag2': '126365ec7175e851', 
