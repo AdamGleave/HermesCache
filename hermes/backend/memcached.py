@@ -105,3 +105,4 @@ class Backend(AbstractBackend):
 
   def clean(self):
     self.client.flush_all()
+
