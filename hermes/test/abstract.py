@@ -161,8 +161,9 @@ class TestAbstractLock(test.TestCase):
           check.release()
         time.sleep(0.05)
     
-    threads = map(lambda i: threading.Thread(target = target), range(4))
-    map(threading.Thread.start, threads)
-    map(threading.Thread.join,  threads)
+    threads = tuple(map(lambda i: threading.Thread(target = target), range(4)))
+    tuple(map(threading.Thread.start, threads))
+    tuple(map(threading.Thread.join,  threads))
     
     self.assertEqual([True, False, False, False], log)
+
