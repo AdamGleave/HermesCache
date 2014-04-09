@@ -2,7 +2,7 @@ from distutils.core import setup
 
 setup(
   name             = 'HermesCache',
-  version          = '0.3.1',
+  version          = '0.4.0',
   author           = 'saaj',
   author_email     = 'mail@saaj.me',
   packages         = ['hermes', 'hermes.backend', 'hermes.test'],
@@ -14,6 +14,7 @@ setup(
   classifiers      = [
     'Topic :: Utilities',
     'Programming Language :: Python :: 2.7',
+    'Programming Language :: Python :: 3.3',    
     'Intended Audience :: Developers'
   ]
 )
