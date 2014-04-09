@@ -5,6 +5,12 @@
 
 import unittest
 import types
+import hashlib
+
+try:
+  import cPickle as pickle
+except ImportError:
+  import pickle
 
 import hermes.backend
 
@@ -28,6 +34,13 @@ class TestCase(unittest.TestCase):
 
     diff = set('test' + name[0].upper() + name[1:] for name in methods(self.testee)) - methods(self)
     self.assertEqual(0, len(diff), 'Test case misses: {0}'.format(', '.join(diff)))
+    
+  def _arghash(self, *args, **kwargs):
+    '''Not very neat as it penetrates into an implementation detail, though otherwise as
+    it'll be harder to make assertion on keys, because pickled results are different on py2 and py3'''
+    
+    arguments = args, tuple(sorted(kwargs.items()))
+    return hashlib.md5(pickle.dumps(arguments, protocol = pickle.HIGHEST_PROTOCOL)).hexdigest()[::2]
 
 
 def createFixture(cache):
@@ -95,11 +108,11 @@ class TestReadme(unittest.TestCase):
         return (a + b) / 2.0
 
           
-    print foo(2, 333)
+    print(foo(2, 333))
     
     example = Example()
-    print example.bar(2, 10)
-    print example.baz(2, 10)
+    print(example.bar(2, 10))
+    print(example.baz(2, 10))
         
     foo.invalidate(2, 333)
     example.bar.invalidate(2, 10)
@@ -120,7 +133,7 @@ class TestReadme(unittest.TestCase):
     foo(2, 2)
     foo(2, 4)
     
-    print cache.backend.dump() 
+    print(cache.backend.dump()) 
     #  {
     #    'cache:entry:foo:515d5cb1a98de31d': 8, 
     #    'cache:entry:foo:a1c97600eac6febb': 4
@@ -137,7 +150,7 @@ class TestReadme(unittest.TestCase):
     
     foo(2, 2)
     
-    print cache.backend.dump() 
+    print(cache.backend.dump()) 
     #  {
     #    u'cache:tag:tag1': '0674536f9eb4eb19', 
     #    u'cache:tag:tag2': 'db22b5ab2e504895', 
@@ -155,7 +168,7 @@ class TestReadme(unittest.TestCase):
     
     foo(2, 2)
     
-    print cache.backend.dump()
+    print(cache.backend.dump())
     #  {
     #    u'cache:tag:tag1': '047820ac777abe8a', 
     #    u'cache:tag:tag2': '126365ec7175e851', 
@@ -165,7 +178,7 @@ class TestReadme(unittest.TestCase):
     cache.clean(['tag1'])
     foo(2, 2)
     
-    print cache.backend.dump() 
+    print(cache.backend.dump()) 
     #  {
     #    u'cache:tag:tag1': '66336fec212def16', 
     #    u'cache:tag:tag2': '126365ec7175e851', 
