@@ -39,7 +39,7 @@ class AbstractBackend(object):
   try:
     __str = basestring  # @UndefinedVariable
   except NameError:
-    __str = str
+    __str = (bytes, str)
   '''Python 2/3 compatible base string type'''
 
 
