@@ -170,13 +170,13 @@ class Cached(object):
   otherwise it is transformed to ``types.MethodType`` by descriptor protocol implementation'''
   
   _ttl = None
-  '''Cache entry Time To Live for decarated callable'''
+  '''Cache entry Time To Live for decorated callable'''
   
   _keyFunc  = None
   '''Key creation function'''
   
   _tags = None
-  '''Cache entry tags for decarated callable'''
+  '''Cache entry tags for decorated callable'''
   
   
   def __init__(self, backend, mangler, ttl, callable, **kwargs):
