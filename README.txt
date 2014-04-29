@@ -12,7 +12,7 @@ Hermes is a Python caching library. The requirements it was designed to fulfill:
   * Simple, at the same time, flexible decorator as end-user API
   * Interface for implementing multiple backends
 
-Implemented backends: ``dict``, ``memcached``, ``redis``.
+Implemented backends: ``redis``, ``memcached``, ``dict`` (test purpose).
 
 
 Usage
