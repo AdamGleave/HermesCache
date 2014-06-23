@@ -12,7 +12,7 @@ setup(
   long_description = open('README.txt').read(),
   platforms        = ['Any'],
   classifiers      = [
-    'Topic :: Utilities',
+    'Topic :: Software Development :: Libraries',
     'Programming Language :: Python :: 2.7',
     'Programming Language :: Python :: 3.3',    
     'Intended Audience :: Developers'
