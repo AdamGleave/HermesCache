@@ -7,7 +7,7 @@ setup(
   author_email     = 'mail@saaj.me',
   packages         = ['hermes', 'hermes.backend', 'hermes.test'],
   url              = 'http://code.google.com/p/hermes-py/',
-  license          = 'LGPL',
+  license          = 'LGPL-2.1+',
   description      = 'Python caching library with tag-based invalidation and dogpile effect prevention',
   long_description = open('README.txt').read(),
   platforms        = ['Any'],
