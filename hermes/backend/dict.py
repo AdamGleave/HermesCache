@@ -30,7 +30,8 @@ class Lock(AbstractLock):
 
 class Backend(AbstractBackend):
   '''Test purpose backend implementation. Does not support entry expiry. ``save`` and ``delete``
-  are not atomic in general.'''
+  are not atomic in general. Though because writes are synchronized it may be suitable for 
+  limited number of real cases with small cached entry size.'''
   
   
   cache = None
