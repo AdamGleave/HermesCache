@@ -240,9 +240,9 @@ class Cached(object):
     return value
   
   def __get__(self, instance, type):
-    '''Implements a non-data descriptor protocol.
+    '''Implements non-data descriptor protocol.
     
-    The invocation happens only when instance method is decorated, so  we can distinguish 
+    The invocation happens only when instance method is decorated, so we can distinguish 
     between decorated ``types.MethodType`` and ``types.FunctionType``. Python class 
     declaration mechanics prevent a decorator from having awareness of the class type, as 
     the function is received by the decorator before it becomes an instance method.
@@ -260,18 +260,26 @@ class Cached(object):
       m = Model()
       m.calc
       
-    Last attribute access results in the call, ``calc.__get__(calc, m, Model)``, where 
-    ``calc`` is instance of ``hermes.Cashed`` which decorates the original ``Model.calc``.
+    Last attribute access results in the call, ``calc.__get__(m, Model)``, where 
+    ``calc`` is instance of ``hermes.Cached`` which decorates the original ``Model.calc``.
+    
+    Note, ``hermes.Cached`` is created on decoration, when class type is created by 
+    the interperter, and is shared among all instances. Then a copy is created with
+    bound ``_callable``, just like ordinary Python method descriptor works.    
     
     For more details, http://docs.python.org/2/howto/descriptor.html#descriptor-protocol
     '''
     
     if not isinstance(self._callable, types.MethodType):
+      methodCached          = object.__new__(Cached)
+      methodCached.__dict__ = self.__dict__.copy()
       try:
-        self._callable = types.MethodType(self._callable, instance, type)
+        methodCached._callable = types.MethodType(self._callable, instance, type)
       except TypeError:
         # python3 compatibility
-        self._callable = types.MethodType(self._callable, instance)
+        methodCached._callable = types.MethodType(self._callable, instance)
+        
+      return methodCached
     
     return self
 

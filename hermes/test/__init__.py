@@ -213,4 +213,29 @@ class TestWrapping(unittest.TestCase):
     self.assertTrue(isinstance(fixture.simple, hermes.Cached))
     self.assertEqual('simple', fixture.simple.__name__)
     self.assertEqual('Here be dragons... seriously just a docstring test', fixture.simple.__doc__)
+    
+  def testInstanceIsolation(self):
+    
+    class Fixture(object):
+      
+      def __init__(self, marker):
+        self.marker = marker
+      
+      @self.testee  
+      def foo(self):
+        return self.marker
+      
+      def bar(self):
+        pass
+      
+    f1 = Fixture(12)
+    f2 = Fixture(24)
+    
+    # verify instances are not shared
+    self.assertIsNot(f1.foo, f2.foo)
+    # like it is normally the case of normal methods
+    self.assertIsNot(f1.bar, f2.bar)
+    
+    self.assertEqual(12, f1.foo())
+    self.assertEqual(24, f2.foo())
 
