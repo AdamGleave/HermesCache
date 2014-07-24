@@ -102,7 +102,8 @@ class Hermes(object):
       example.baz.invalidate(2, 10)
           
       cache.clean(['math']) # invalidate entries tagged 'math'
-      cache.clean()         # flush cache''' 
+      cache.clean()         # flush cache
+  ''' 
   
   backend = None
   '''Cache backend'''
@@ -120,7 +121,8 @@ class Hermes(object):
     Positional agruments are backend class and mangler class. If ommited noop-backend
     and built-in mangler will be be used.
     
-    Keyword arguments comprise of ``ttl`` and backend parameters.'''
+    Keyword arguments comprise of ``ttl`` and backend parameters.
+    '''
     
     self.ttl = kwargs.pop('ttl', self.ttl)
     
@@ -138,7 +140,8 @@ class Hermes(object):
       :tags:  Cache entry tag list.
       
     ``@cache`` decoration is supported as well as 
-    ``@cache(ttl = 7200, tags = ('tag1', 'tag2'), key = lambda fn, *args, **kwargs: 'mykey')``.'''
+    ``@cache(ttl = 7200, tags = ('tag1', 'tag2'), key = lambda fn, *args, **kwargs: 'mykey')``.
+    '''
     
     if args and isinstance(args[0], (types.FunctionType, types.MethodType)):
       # @cache
@@ -167,7 +170,9 @@ class Cached(object):
   
   _callable = None
   '''The decorated callable, stays ``types.FunctionType`` if a function is decorated, 
-  otherwise it is transformed to ``types.MethodType`` by descriptor protocol implementation'''
+  otherwise it is transformed to ``types.MethodType`` on the instance clone by descriptor 
+  protocol implementation.
+  '''
   
   _ttl = None
   '''Cache entry Time To Live for decorated callable'''
@@ -267,7 +272,7 @@ class Cached(object):
     the interperter, and is shared among all instances. Then a copy is created with
     bound ``_callable``, just like ordinary Python method descriptor works.    
     
-    For more details, http://docs.python.org/2/howto/descriptor.html#descriptor-protocol
+    For more details, http://docs.python.org/2/howto/descriptor.html#descriptor-protocol.
     '''
     
     if not isinstance(self._callable, types.MethodType):
