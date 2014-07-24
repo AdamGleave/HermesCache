@@ -23,7 +23,13 @@ class TestMemcached(test.TestCase):
     self.testee.clean()
   
   def getSize(self):
-    return int(self.testee.backend.client.get_stats()[0][1][b'curr_items'])
+    stats = self.testee.backend.client.get_stats()[0][1]
+    try:
+      # python3-memcached
+      return int(stats[b'curr_items'])
+    except KeyError:
+      # pylibmc
+      return int(stats['curr_items'])
   
   def testSimple(self):
     self.assertEqual(0, self.fixture.calls)
