@@ -268,9 +268,10 @@ class Cached(object):
     Last attribute access results in the call, ``calc.__get__(m, Model)``, where 
     ``calc`` is instance of ``hermes.Cached`` which decorates the original ``Model.calc``.
     
-    Note, ``hermes.Cached`` is created on decoration, when class type is created by 
-    the interperter, and is shared among all instances. Then a copy is created with
-    bound ``_callable``, just like ordinary Python method descriptor works.    
+    Note, initially ``hermes.Cached`` is created on decoration per class method, when class 
+    type is created by the interperter, and is shared among all instances. Later, on attribute 
+    access, a copy is returned with bound ``_callable``, just like ordinary Python method 
+    descriptor works.    
     
     For more details, http://docs.python.org/2/howto/descriptor.html#descriptor-protocol.
     '''
