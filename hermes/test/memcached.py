@@ -396,11 +396,7 @@ class TestMemcached(test.TestCase):
     self.assertFalse(aTag == zTag)
     self.assertEqual(16, len(aTag))
     self.assertEqual(16, len(zTag))
-    
-    tagHash = self.testee.mangler.hashTags(dict(a = aTag, z = zTag))
-    key     = 'mk:alpha:beta:' + tagHash
-    self.assertEqual('apabt', pickle.loads(self.testee.backend.client.get(key)))
-    
+
     
     self.testee.clean(('a', 'z'))
 
