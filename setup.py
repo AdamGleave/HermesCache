@@ -12,7 +12,7 @@ except ImportError:
 
 setup(
   name             = 'HermesCache',
-  version          = '0.4.1',
+  version          = '0.5.0',
   author           = 'saaj',
   author_email     = 'mail@saaj.me',
   packages         = ['hermes', 'hermes.backend', 'hermes.test'],
