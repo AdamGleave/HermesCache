@@ -1,4 +1,14 @@
-from distutils.core import setup
+# -*- coding: utf-8 -*-
+'''
+@author: saaj
+'''
+
+
+try:
+  from setuptools import setup
+except ImportError:
+  from distutils.core import setup
+
 
 setup(
   name             = 'HermesCache',
@@ -6,6 +16,7 @@ setup(
   author           = 'saaj',
   author_email     = 'mail@saaj.me',
   packages         = ['hermes', 'hermes.backend', 'hermes.test'],
+  test_suite       = 'hermes.test',
   url              = 'http://code.google.com/p/hermes-py/',
   license          = 'LGPL-2.1+',
   description      = 'Python caching library with tag-based invalidation and dogpile effect prevention',
@@ -18,3 +29,4 @@ setup(
     'Intended Audience :: Developers'
   ]
 )
+
