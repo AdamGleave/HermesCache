@@ -5,6 +5,7 @@
 
 import time
 import importlib
+
 redis = importlib.import_module('redis')
 
 from . import AbstractBackend, AbstractLock
