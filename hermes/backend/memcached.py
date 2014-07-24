@@ -95,7 +95,11 @@ class Backend(AbstractBackend):
         value = self.mangler.loads(value)
       return value
     else:
-      return {k : self.mangler.loads(v) for k, v in self.client.get_multi(keys).items()}
+      # python3 pylibmc returns byte keys
+      return {
+        k.decode() if isinstance(k, bytes) else k : self.mangler.loads(v) 
+        for k, v in self.client.get_multi(tuple(keys)).items()
+      }
   
   def remove(self, keys):
     if self._isScalar(keys):
