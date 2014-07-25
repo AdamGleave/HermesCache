@@ -413,7 +413,9 @@ class TestMemcachedLock(test.TestCase):
     cache = hermes.Hermes(hermes.backend.memcached.Backend)
     cache.clean()
     
-    self.testee = hermes.backend.memcached.Lock('123', cache.backend.client)
+    # make lock instance be created with client from ``hermes.Hermes`` instance at 
+    # thread context to utilize ``hermes.backend.memcached.Backend`` ``thread.local``
+    self.__class__.testee = property(lambda self: hermes.backend.memcached.Lock('123', cache.backend.client)) 
   
   def testAcquire(self):
     for _ in range(2):
