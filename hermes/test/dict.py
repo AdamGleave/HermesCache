@@ -759,3 +759,16 @@ class TestDictCustomMangler(TestDict):
     self.assertEqual('mk:alpha:beta', ':'.join(tuple(cache.keys())[0].split(':')[:-1]))
     self.assertEqual('apabt', tuple(cache.values())[0])
 
+
+class TestDictPerformance(test.unittest.TestCase):
+  
+  def setUp(self):
+    self.testee  = hermes.Hermes(hermes.backend.dict.Backend, ttl = 360) 
+    self.fixture = test.createFixture(self.testee)
+    
+  def tearDown(self):
+    self.testee.clean()
+  
+  def testPerformance(self):
+    test.benchmark(self.fixture)
+

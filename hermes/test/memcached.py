@@ -6,6 +6,7 @@
 import threading
 import time
 import pickle
+import telnetlib
 
 import hermes.test as test
 import hermes.backend.memcached
@@ -463,3 +464,45 @@ class TestMemcachedLock(test.TestCase):
     
     self.assertEqual([True] * 4, log)
 
+
+class TestMemcachedPerformance(test.unittest.TestCase):
+  
+  def setUp(self):
+    self.testee  = hermes.Hermes(hermes.backend.memcached.Backend, ttl = 360) 
+    self.fixture = test.createFixture(self.testee)
+    
+  def tearDown(self):
+    self.forceClean()
+  
+  def testPerformance(self):
+    test.benchmark(self.fixture)
+  
+  def forceClean(self):
+    '''What a poorly piece of software! Most of the issues that happen within the library
+    developing are memcached issues. Most notable is that it won't flush damn keys. No matter
+    how many times you call it to flush, or wait for clean state -- expired by flush call keys 
+    are just stale with expiry timestamp in past. Current version is 1.4.14.
+    '''
+    
+    telnet = telnetlib.Telnet('127.0.0.1', 11211)
+    try:
+      telnet.write(b'stats items\n')
+      slablines = telnet.read_until(b'END').split(b'\r\n')
+      keys      = set()
+      for line in slablines:
+        parts = line.decode().split(':')
+        if len(parts) < 2:
+          continue
+        slab = parts[1]
+        telnet.write('stats cachedump {0} 0\n'.format(slab).encode())
+        cachelines = telnet.read_until(b'END').split(b'\r\n')
+        for line in cachelines:
+          parts = line.decode().split(' ', 3)
+          if len(parts) < 2:
+            continue
+          keys.add(parts[1])
+    finally:
+      telnet.close()
+    
+    self.testee.backend.remove(keys)
+    

@@ -3,9 +3,12 @@
 '''
 
 
+import sys
 import unittest
 import types
 import hashlib
+import random
+import datetime
 
 try:
   import cPickle as pickle
@@ -84,6 +87,27 @@ def createFixture(cache):
     
   return Fixture()
 
+
+def benchmark(fixture):
+  try:
+    # Python 2
+    xrange = xrange  # @UndefinedVariable
+  except NameError:
+    # Python 3
+    xrange = range
+  
+  args   = [(random.randint(0, 4096), random.randint(0, 4096)) for _ in xrange(1024)]
+  repeat = 8192
+  for method in ('simple', 'tagged'):
+    print('\n{0} {1} {0}'.format('-' * 20, method))
+    start = datetime.datetime.now()
+    for _ in xrange(repeat):
+      getattr(fixture, method)(*random.choice(args))
+    delta = datetime.datetime.now() - start
+    print('  repeated:    {0:,}'.format(repeat))
+    print('  time:        {0}'.format(delta))
+    print('  call/second: {0:,.0f}'.format(repeat / delta.total_seconds()))
+  
 
 class TestReadme(unittest.TestCase):
   

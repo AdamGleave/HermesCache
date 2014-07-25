@@ -464,3 +464,16 @@ class TestRedisLock(test.TestCase):
     
     self.assertEqual([True] * 4, log)
 
+
+class TestRedisPerformance(test.unittest.TestCase):
+  
+  def setUp(self):
+    self.testee = hermes.Hermes(hermes.backend.redis.Backend, ttl = 360) 
+    self.fixture = test.createFixture(self.testee)
+    
+  def tearDown(self):
+    self.testee.clean()
+  
+  def testPerformance(self):
+    test.benchmark(self.fixture)
+

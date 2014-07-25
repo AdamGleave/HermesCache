@@ -167,3 +167,16 @@ class TestAbstractLock(test.TestCase):
     
     self.assertEqual([True, False, False, False], log)
 
+
+class TestAbstractPerformance(test.unittest.TestCase):
+  
+  def setUp(self):
+    self.testee  = hermes.Hermes(hermes.backend.AbstractBackend, ttl = 360) 
+    self.fixture = test.createFixture(self.testee)
+    
+  def tearDown(self):
+    self.testee.clean()
+  
+  def testPerformance(self):
+    test.benchmark(self.fixture)
+
