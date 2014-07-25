@@ -172,8 +172,53 @@ Memory overhead consists of tag entries and stale cache entries. Demonstrated be
     #    'cache:entry:foo:a1c97600eac6febb:5cae80f5e7d58329': 4  ← garbage
     #  }
     
-So the TTLs should be chosen elaborately. With `Redis <http://redis.io/topics/config>`_ 
-backend it's also recommended to set ``maxmemory-policy`` to ``volatile-lru``.
+So the TTLs should be chosen elaborately. With Redis backend it's also recommended 
+to set `maxmemory-policy <http://redis.io/topics/config>`_ to ``volatile-lru``.
+
+
+Backend and client library
+==========================
+
+Supported dependencies are listed in `tox.ini <http://code.google.com/p/hermes-py/source/browse/tox.ini>`_
+of the package. The way they put together is on project's 
+`drone.io CI page <https://drone.io/saaj/hermes-py>`_. 
+
+
+Redis
+-----
+``hermes.backend.redis`` depends on `redis <https://pypi.python.org/pypi/redis>`_. Optionally
+`hiredis <https://pypi.python.org/pypi/hiredis>`_ can be installed in addition to boost protocol
+parsing. However *hiredis* gives significant advantage on big bulk operations and in 
+context of the package adds about 10%.  
+
+Memcached
+---------
+``hermes.backend.memcached`` depends either on pure-python 
+`python-memcached <https://pypi.python.org/pypi/python-memcached>`_ 
+(`python3-memcached <https://pypi.python.org/pypi/python3-memcached>`_) or on, *libmemcached*
+wrapper, `pylibmc <https://pypi.python.org/pypi/pylibmc>`_. Note, that at the moment of writing
+the Cheese Shop's version of *pylibmc* is 1.3 and it's not supported, though its reposiroty's
+master branch, pre-1.3.1, is okay. *pylibmc* gives about 50% improvement.  
+
+Dict
+----
+``hermes.backend.dict`` is neither complete backend nor it is designed for any distributed use.
+Original purpose was a development need and in fact it's just a wrapper on Python ``dict``. It 
+doesn't implement entry expiry and any memory limiting. Though it can be used in limited cases
+where cached entry size is a priori small and actual state is maintained only with manual 
+invalidation.   
+
+
+Performance
+-----------
+
+Here are some clues about performance of backends and client libraries. It wasn't an intension
+to provide some statistically significant performance estimation. These are just results from
+`build #7 <https://drone.io/saaj/hermes-py/7>`_ from project CI service.
+
+.. image:: http://wiki.hermes-py.googlecode.com/hg/simple.png
+  
+.. image:: http://wiki.hermes-py.googlecode.com/hg/tagged.png  
 
 
 Reviewed implementations
