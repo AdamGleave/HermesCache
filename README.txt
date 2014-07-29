@@ -131,7 +131,7 @@ Once we want to invalidate tagged entries we just need to remove the tag entry. 
 tag hash was created with, it is impossible to construct the entry key so the tagged cache entries become
 inaccessible thus invalidated. As usually a feature built on-top of another feature adds complexity.
 
-Speed. All operations become O(n) where *n* is number of entry tags. However since we can
+Performance. All operations become O(n) where *n* is number of entry tags. However since we can
 rarely need more than a few dozens of tags, practically it is still O(1). Tag entry operations are batched
 so the implications on number of network operations go as follow:
 
