@@ -218,7 +218,7 @@ to provide some statistically significant performance estimation. These are just
 
 .. image:: https://goo.gl/ZT0phq
   
-.. image:: https://goo.gl/4iU9Hn
+.. image:: https://goo.gl/ZYCSGi
 
 
 Reviewed implementations
