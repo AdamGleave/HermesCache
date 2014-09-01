@@ -216,9 +216,9 @@ Here are some clues about performance of backends and client libraries. It wasn'
 to provide some statistically significant performance estimation. These are just results from
 `build #7 <https://drone.io/saaj/hermes-py/7>`_ from project CI service.
 
-.. image:: http://wiki.hermes-py.googlecode.com/hg/simple.png
+.. image:: https://goo.gl/ZT0phq
   
-.. image:: http://wiki.hermes-py.googlecode.com/hg/tagged.png  
+.. image:: https://goo.gl/4iU9Hn
 
 
 Reviewed implementations
