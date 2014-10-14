@@ -135,7 +135,7 @@ Performance. All operations become O(n) where *n* is number of entry tags. Howev
 rarely need more than a few dozens of tags, practically it is still O(1). Tag entry operations are batched
 so the implications on number of network operations go as follow:
 
-  * ``set`` – 3x backend calls (``get`` + 2 * ``set``) in worst case. Average is expected to be 2x when
+  * ``set`` – 3x backend calls (``get + 2 * set``) in worst case. Average is expected to be 2x when
     all used tag entries are created.
   * ``get`` – 2x backend calls.
   * ``delete`` – 2x backend calls.
@@ -227,7 +227,7 @@ Reviewed implementations
 Before I wrote the library I looked through the Cheese Shop for one that fits my needs. Unfortunately
 there was none, however some matched partially and were the inspiration in certain aspects:
 
-  * `cache <http://pypi.python.org/pypi/cache/>`_
+`cache <http://pypi.python.org/pypi/cache/>`_
 
     Pro:
       * clean end-user API
@@ -238,7 +238,7 @@ there was none, however some matched partially and were the inspiration in certa
       * no cache entry tagging
       * fail with instance methods
 
-  * `dogpile.cache <http://pypi.python.org/pypi/dogpile.cache/>`_
+`dogpile.cache <http://pypi.python.org/pypi/dogpile.cache/>`_
 
     Pro:
       * mature
@@ -249,7 +249,7 @@ there was none, however some matched partially and were the inspiration in certa
       * complicated code-base
       * not concise end-user API
 
-  * `cache-tagging <http://pypi.python.org/pypi/cache-tagging/>`_
+`cache-tagging <http://pypi.python.org/pypi/cache-tagging/>`_
 
     Pro:
       * cache entry tagging
