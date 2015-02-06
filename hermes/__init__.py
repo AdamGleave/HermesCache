@@ -21,7 +21,7 @@ __all__ = 'Hermes', 'Mangler'
 
 
 class Mangler(object):
-  '''Key manager responsible for creating keys, hashing and serialzation'''
+  '''Key manager responsible for creating keys, hashing and serialization'''
   
   prefix = 'cache'
   '''Prefix for cache and tag entries'''
@@ -109,16 +109,16 @@ class Hermes(object):
   '''Cache backend'''
   
   mangler = None
-  '''Key manager responsible for creating keys, hashing and serialzation'''
+  '''Key manager responsible for creating keys, hashing and serialization'''
   
   ttl = 3600
   '''Default cache entry Time To Live'''
   
   
   def __init__(self, backendClass = AbstractBackend, manglerClass = Mangler, **kwargs):
-    '''Creates a cache decorator factory. 
+    '''Initialises the cache decorator factory. 
       
-    Positional agruments are backend class and mangler class. If ommited noop-backend
+    Positional arguments are backend class and mangler class. If omitted noop-backend
     and built-in mangler will be be used.
     
     Keyword arguments comprise of ``ttl`` and backend parameters.
@@ -136,7 +136,7 @@ class Hermes(object):
     '''Decorator that caches method or function result. The following key arguments are optional:
     
       :key:   Lambda that provides custom key, otherwise ``Mangler.nameEntry`` is used.
-      :ttl:   Seconds until enry expiration, otherwise instance default is used.
+      :ttl:   Seconds until entry expiration, otherwise instance default is used.
       :tags:  Cache entry tag list.
       
     ``@cache`` decoration is supported as well as 
@@ -166,7 +166,7 @@ class Cached(object):
   '''Cache backend'''
   
   _mangler = None
-  '''Key manager responsible for creating keys, hashing and serialzing values'''
+  '''Key manager responsible for creating keys, hashing and serializing values'''
   
   _callable = None
   '''The decorated callable, stays ``types.FunctionType`` if a function is decorated, 
@@ -269,7 +269,7 @@ class Cached(object):
     ``calc`` is instance of ``hermes.Cached`` which decorates the original ``Model.calc``.
     
     Note, initially ``hermes.Cached`` is created on decoration per class method, when class 
-    type is created by the interperter, and is shared among all instances. Later, on attribute 
+    type is created by the interpreter, and is shared among all instances. Later, on attribute 
     access, a copy is returned with bound ``_callable``, just like ordinary Python method 
     descriptor works.    
     
