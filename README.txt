@@ -1,3 +1,7 @@
+.. image:: https://drone.io/bitbucket.org/saaj/hermes/status.png
+   :target: https://drone.io/bitbucket.org/saaj/hermes/latest
+.. image:: https://pypip.in/v/HermesCache/badge.png
+   :target: https://pypi.python.org/pypi/HermesCache
 
 ***********
 HermesCache
