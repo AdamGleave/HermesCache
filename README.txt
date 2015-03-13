@@ -5,12 +5,12 @@ HermesCache
 
 Hermes is a Python caching library. The requirements it was designed to fulfill:
 
-  * Tag-based cache invalidation
-  * Dogpile effect prevention
-  * Thread-safety 
-  * Straightforward design
-  * Simple, at the same time, flexible decorator as end-user API
-  * Interface for implementing multiple backends
+* Tag-based cache invalidation
+* Dogpile effect prevention
+* Thread-safety 
+* Straightforward design
+* Simple, at the same time, flexible decorator as end-user API
+* Interface for implementing multiple backends
 
 Implemented backends: ``redis``, ``memcached``, ``dict`` (no expiry).
 
@@ -135,10 +135,10 @@ Performance. All operations become O(n) where *n* is number of entry tags. Howev
 rarely need more than a few dozens of tags, practically it is still O(1). Tag entry operations are batched
 so the implications on number of network operations go as follow:
 
-  * ``set`` – 3x backend calls (``get + 2 * set``) in worst case. Average is expected to be 2x when
-    all used tag entries are created.
-  * ``get`` – 2x backend calls.
-  * ``delete`` – 2x backend calls.
+* ``set`` – 3x backend calls (``get + 2 * set``) in worst case. Average is expected to be 2x when
+  all used tag entries are created.
+* ``get`` – 2x backend calls.
+* ``delete`` – 2x backend calls.
 
 Memory overhead consists of tag entries and stale cache entries. Demonstrated below.
 
@@ -229,30 +229,30 @@ there was none, however some matched partially and were the inspiration in certa
 
 `cache <http://pypi.python.org/pypi/cache/>`_
 
-    Pro:
-      * clean end-user API
-      * straightforward design
-    Con:
-      * no auto cache key calculation
-      * no dogpile effect prevention
-      * no cache entry tagging
-      * fail with instance methods
+Pro:
+  * clean end-user API
+  * straightforward design
+Con:
+  * no auto cache key calculation
+  * no dogpile effect prevention
+  * no cache entry tagging
+  * fail with instance methods
 
 `dogpile.cache <http://pypi.python.org/pypi/dogpile.cache/>`_
 
-    Pro:
-      * mature
-      * very well documented
-      * prevents dogpile effect
-    Con:
-      * no cache entry tagging
-      * complicated code-base
-      * not concise end-user API
+Pro:
+  * mature
+  * very well documented
+  * prevents dogpile effect
+Con:
+  * no cache entry tagging
+  * complicated code-base
+  * not concise end-user API
 
 `cache-tagging <http://pypi.python.org/pypi/cache-tagging/>`_
 
-    Pro:
-      * cache entry tagging
-    Con:
-      * designed for the news website scaffolding framework
-      * thus bloat is all around
+Pro:
+  * cache entry tagging
+Con:
+  * designed for the news website scaffolding framework
+  * thus bloat is all around
