@@ -56,7 +56,7 @@ The following demonstrates all end-user API.
     cache.clean()         # flush cache
 
 For advanced examples look in
-`test suite <http://code.google.com/p/hermes-py/source/browse/#hg%2Fhermes%2Ftest>`_.
+`test suite <https://bitbucket.org/saaj/hermes/src/tip/hermes/test/>`_.
 
 
 Tagging cache entries
@@ -179,9 +179,9 @@ to set `maxmemory-policy <http://redis.io/topics/config>`_ to ``volatile-lru``.
 Backend and client library
 ==========================
 
-Supported dependencies are listed in `tox.ini <http://code.google.com/p/hermes-py/source/browse/tox.ini>`_
+Supported dependencies are listed in `tox.ini <https://bitbucket.org/saaj/hermes/src/tip/tox.ini>`_
 of the package. The way they put together is on project's 
-`drone.io CI page <https://drone.io/saaj/hermes-py>`_. 
+`drone.io CI page <https://drone.io/bitbucket.org/saaj/hermes>`_. 
 
 
 Redis
@@ -214,7 +214,7 @@ Performance
 
 Here are some clues about performance of backends and client libraries. It wasn't an intension
 to provide some statistically significant performance estimation. These are just results from
-`build #7 <https://drone.io/saaj/hermes-py/7>`_ from project CI service.
+one of CI builds.
 
 .. image:: https://goo.gl/ZT0phq
   
