@@ -15,6 +15,16 @@ Hermes is a Python caching library. The requirements it was designed to fulfill:
 Implemented backends: ``redis``, ``memcached``, ``dict`` (no expiry).
 
 
+Install
+=======
+
+.. code-block:: 
+
+    pip install HermesCache
+    
+Make sure desired backend's adapter is installed. See below.
+
+
 Usage
 =====
 
