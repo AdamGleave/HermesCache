@@ -22,7 +22,7 @@ setup(
   description      = 'Python caching library with tag-based invalidation and dogpile effect prevention',
   long_description = open('README.txt').read(),
   platforms        = ['Any'],
-  keywords         = 'python, cache, tagging, redis, memcached',
+  keywords         = 'python cache tagging redis memcached',
   classifiers      = [
     'Topic :: Software Development :: Libraries',
     'Programming Language :: Python :: 2.7',
