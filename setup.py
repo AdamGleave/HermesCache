@@ -17,11 +17,12 @@ setup(
   author_email     = 'mail@saaj.me',
   packages         = ['hermes', 'hermes.backend', 'hermes.test'],
   test_suite       = 'hermes.test',
-  url              = 'http://code.google.com/p/hermes-py/',
+  url              = 'https://bitbucket.org/saaj/hermes',
   license          = 'LGPL-2.1+',
   description      = 'Python caching library with tag-based invalidation and dogpile effect prevention',
   long_description = open('README.txt').read(),
   platforms        = ['Any'],
+  keywords         = 'python, cache, tagging, redis, memcached',
   classifiers      = [
     'Topic :: Software Development :: Libraries',
     'Programming Language :: Python :: 2.7',
