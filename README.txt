@@ -26,7 +26,7 @@ Install
 
     pip install HermesCache
     
-Make sure desired backend's adapter is installed. See below.
+Make sure desired backend client library is installed. See below.
 
 
 Usage
