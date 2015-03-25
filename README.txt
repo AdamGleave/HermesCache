@@ -24,7 +24,7 @@ Implemented backends: ``redis``, ``memcached``, ``dict`` (no expiry).
 Install
 =======
 
-.. code-block:: 
+.. sourcecode:: 
 
     pip install HermesCache
     
@@ -36,7 +36,7 @@ Usage
 
 The following demonstrates all end-user API.
 
-.. code-block:: python
+.. sourcecode:: python
 
     import hermes.backend.redis
   
@@ -80,7 +80,7 @@ Tagging cache entries
 
 First let's look how basic caching works.
 
-.. code-block:: python
+.. sourcecode:: python
 
     import hermes.backend.dict
   
@@ -118,7 +118,7 @@ this group of method results with a tag and invalidate them all at once.
 Here's `article <http://eflorenzano.com/blog/2009/03/02/tagging-cache-keys-o1-batch-invalidation/>`_
 by Eric Florenzano which explains the idea. Let's look the code.
 
-.. code-block:: python
+.. sourcecode:: python
 
     import hermes.backend.dict
   
@@ -158,7 +158,7 @@ so the implications on number of network operations go as follow:
 
 Memory overhead consists of tag entries and stale cache entries. Demonstrated below.
 
-.. code-block:: python
+.. sourcecode:: python
 
     import hermes.backend.dict
   
