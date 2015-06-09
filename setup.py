@@ -20,7 +20,7 @@ setup(
   url              = 'https://bitbucket.org/saaj/hermes',
   license          = 'LGPL-2.1+',
   description      = 'Python caching library with tag-based invalidation and dogpile effect prevention',
-  long_description = open('README.txt').read(),
+  long_description = open('README.txt', 'rb').read().decode('utf-8'),
   platforms        = ['Any'],
   keywords         = 'python cache tagging redis memcached',
   classifiers      = [
