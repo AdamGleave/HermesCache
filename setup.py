@@ -25,7 +25,9 @@ setup(
   keywords         = 'python cache tagging redis memcached',
   classifiers      = [
     'Topic :: Software Development :: Libraries',
+    'Programming Language :: Python :: 2',
     'Programming Language :: Python :: 2.7',
+    'Programming Language :: Python :: 3',    
     'Programming Language :: Python :: 3.3',    
     'Intended Audience :: Developers'
   ]
