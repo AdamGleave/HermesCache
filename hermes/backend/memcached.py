@@ -18,7 +18,7 @@ __all__ = 'Lock', 'Backend'
 
 
 class Lock(AbstractLock):
-  '''Key-aware distrubuted lock'''
+  '''Key-aware distributed lock'''
   
   client = None
   '''Memcached client'''
