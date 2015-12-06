@@ -760,6 +760,44 @@ class TestDictCustomMangler(TestDict):
     self.assertEqual('apabt', tuple(cache.values())[0])
 
 
+class CustomCached(hermes.Cached):
+  
+  def __call__(self, *args, **kwargs):
+    ''''Override to add bypass when backend is down'''
+    
+    try:
+      return super(CustomCached, self).__call__(*args, **kwargs)
+    except RuntimeError:
+      return self._callable(*args, **kwargs)
+
+
+class BackendThatIsDown(hermes.backend.dict.Backend):
+  
+  def load(self, keys):
+    raise RuntimeError('Backend is down')
+
+
+class TestDictCustomCached(test.TestCase):
+  
+  def setUp(self):
+    self.testee  = hermes.Hermes(BackendThatIsDown, cachedClass = CustomCached, ttl = 360) 
+    self.fixture = test.createFixture(self.testee)
+    
+    self.testee.clean()
+    
+  def testSimple(self):
+    self.assertEqual(0,  self.fixture.calls)
+    self.assertEqual({}, self.testee.backend.dump())
+    
+    for i in range(4):
+      self.assertEqual('ateb+ahpla', self.fixture.simple('alpha', 'beta'))
+      self.assertEqual(i + 1, self.fixture.calls)
+      self.assertEqual({}, self.testee.backend.dump())
+    
+  def testMethodCoverage(self):
+    pass
+
+
 class TestDictPerformance(test.unittest.TestCase):
   
   def setUp(self):
