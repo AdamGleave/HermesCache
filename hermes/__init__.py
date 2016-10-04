@@ -68,97 +68,6 @@ class Mangler(object):
     return ':'.join([self.prefix, 'lock', entryKey])
 
 
-class Hermes(object):
-  '''Cache facade. Usage: 
-    
-      import hermes.backend.redis
-    
-      cache = hermes.Hermes(hermes.backend.redis.Backend, ttl = 600, host = 'localhost', db = 1)
-          
-          
-      @cache
-      def foo(a, b):
-        return a * b
-      
-      class Example:
-            
-        @cache(tags = ('math', 'power'), ttl = 1200)
-        def bar(self, a, b):
-          return a ** b
-          
-        @cache(tags = ('math', 'avg'), key = lambda fn, *args, **kwargs: 'avg:{0}:{1}'.format(*args))
-        def baz(self, a, b):
-          return (a + b) / 2.0
-  
-            
-      print(foo(2, 333))
-      
-      example = Example()
-      print(example.bar(2, 10))
-      print(example.baz(2, 10))
-          
-      foo.invalidate(2, 333)
-      example.bar.invalidate(2, 10)
-      example.baz.invalidate(2, 10)
-          
-      cache.clean(['math']) # invalidate entries tagged 'math'
-      cache.clean()         # flush cache
-  ''' 
-  
-  backend = None
-  '''Cache backend'''
-  
-  mangler = None
-  '''Key manager responsible for creating keys, hashing and serialization'''
-  
-  ttl = 3600
-  '''Default cache entry Time To Live'''
-  
-  
-  def __init__(self, backendClass = AbstractBackend, manglerClass = Mangler, **kwargs):
-    '''Initialises the cache decorator factory. 
-      
-    Positional arguments are backend class and mangler class. If omitted noop-backend
-    and built-in mangler will be be used.
-    
-    Keyword arguments comprise of ``ttl`` and backend parameters.
-    '''
-    
-    self.ttl = kwargs.pop('ttl', self.ttl)
-    
-    assert issubclass(manglerClass, Mangler)
-    self.mangler = manglerClass()
-    
-    assert issubclass(backendClass, AbstractBackend)
-    self.backend = backendClass(self.mangler, **kwargs)
-
-  def __call__(self, *args, **kwargs):
-    '''Decorator that caches method or function result. The following key arguments are optional:
-    
-      :key:   Lambda that provides custom key, otherwise ``Mangler.nameEntry`` is used.
-      :ttl:   Seconds until entry expiration, otherwise instance default is used.
-      :tags:  Cache entry tag list.
-      
-    ``@cache`` decoration is supported as well as 
-    ``@cache(ttl = 7200, tags = ('tag1', 'tag2'), key = lambda fn, *args, **kwargs: 'mykey')``.
-    '''
-    
-    if args and isinstance(args[0], (types.FunctionType, types.MethodType)):
-      # @cache
-      return Cached(self.backend, self.mangler, self.ttl, args[0])
-    else:
-      # @cache()
-      return lambda fn: Cached(self.backend, self.mangler, kwargs.pop('ttl', self.ttl), fn, **kwargs)
-    
-  def clean(self, tags = None):
-    '''If tags argument is omitted flushes all entries, otherwise removes provided tag entries'''
-    
-    if tags:
-      self.backend.remove(map(self.mangler.nameTag, tags))
-    else:
-      self.backend.clean()
-
-
 class Cached(object):
   '''A wrapper for cached function or method'''
   
@@ -277,7 +186,7 @@ class Cached(object):
     '''
     
     if not isinstance(self._callable, types.MethodType):
-      methodCached          = object.__new__(Cached)
+      methodCached          = object.__new__(self.__class__)
       methodCached.__dict__ = self.__dict__.copy()
       try:
         methodCached._callable = types.MethodType(self._callable, instance, type)
@@ -288,4 +197,104 @@ class Cached(object):
       return methodCached
     
     return self
+
+
+class Hermes(object):
+  '''Cache facade. Usage: 
+    
+      import hermes.backend.redis
+    
+      cache = hermes.Hermes(hermes.backend.redis.Backend, ttl = 600, host = 'localhost', db = 1)
+          
+          
+      @cache
+      def foo(a, b):
+        return a * b
+      
+      class Example:
+            
+        @cache(tags = ('math', 'power'), ttl = 1200)
+        def bar(self, a, b):
+          return a ** b
+          
+        @cache(tags = ('math', 'avg'), 
+          key = lambda fn, *args, **kwargs: 'avg:{0}:{1}'.format(*args))
+        def baz(self, a, b):
+          return (a + b) / 2.0
+  
+            
+      print(foo(2, 333))
+      
+      example = Example()
+      print(example.bar(2, 10))
+      print(example.baz(2, 10))
+          
+      foo.invalidate(2, 333)
+      example.bar.invalidate(2, 10)
+      example.baz.invalidate(2, 10)
+          
+      cache.clean(['math']) # invalidate entries tagged 'math'
+      cache.clean()         # flush cache
+  ''' 
+  
+  backend = None
+  '''Cache backend'''
+  
+  mangler = None
+  '''Key manager responsible for creating keys, hashing and serialization'''
+  
+  cachedClass = None
+  '''Class of cache-point callable object'''
+  
+  ttl = 3600
+  '''Default cache entry Time To Live'''
+  
+  
+  def __init__(self, backendClass = AbstractBackend, manglerClass = Mangler, cachedClass = Cached,
+    **kwargs):
+    '''Initialises the cache decorator factory. 
+      
+    Positional arguments are backend class and mangler class. If omitted noop-backend
+    and built-in mangler will be be used.
+    
+    Keyword arguments comprise of ``ttl`` and backend parameters.
+    '''
+    
+    self.ttl = kwargs.pop('ttl', self.ttl)
+    
+    assert issubclass(manglerClass, Mangler)
+    self.mangler = manglerClass()
+    
+    assert issubclass(cachedClass, Cached)
+    self.cachedClass = cachedClass
+    
+    assert issubclass(backendClass, AbstractBackend)
+    self.backend = backendClass(self.mangler, **kwargs)
+
+  def __call__(self, *args, **kwargs):
+    '''Decorator that caches method or function result. The following key arguments are optional:
+    
+      :key:   Lambda that provides custom key, otherwise ``Mangler.nameEntry`` is used.
+      :ttl:   Seconds until entry expiration, otherwise instance default is used.
+      :tags:  Cache entry tag list.
+      
+    ``@cache`` decoration is supported as well as 
+    ``@cache(ttl = 7200, tags = ('tag1', 'tag2'), key = lambda fn, *args, **kwargs: 'mykey')``.
+    '''
+    
+    if args and isinstance(args[0], (types.FunctionType, types.MethodType)):
+      # @cache
+      return self.cachedClass(self.backend, self.mangler, self.ttl, args[0])
+    else:
+      # @cache()
+      return lambda fn: self.cachedClass(self.backend, self.mangler, kwargs.pop('ttl', self.ttl), 
+        fn, **kwargs)
+    
+  def clean(self, tags = None):
+    '''If tags argument is omitted flushes all entries, otherwise removes provided tag entries'''
+    
+    if tags:
+      self.backend.remove(map(self.mangler.nameTag, tags))
+    else:
+      self.backend.clean()
 
