@@ -1,7 +1,7 @@
 .. image:: https://drone.io/bitbucket.org/saaj/hermes/status.png
   :target: https://drone.io/bitbucket.org/saaj/hermes/latest
-.. image:: https://codecov.io/bitbucket/saaj/hermes/coverage.svg?branch=default
-  :target: https://codecov.io/bitbucket/saaj/hermes?branch=default 
+.. image:: https://codecov.io/bitbucket/saaj/hermes/branch/default/graph/badge.svg
+  :target: https://codecov.io/bitbucket/saaj/hermes/branch/default 
 .. image:: https://badge.fury.io/py/HermesCache.png
   :target: https://pypi.python.org/pypi/HermesCache
 
