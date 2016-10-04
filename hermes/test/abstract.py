@@ -165,7 +165,7 @@ class TestAbstractLock(test.TestCase):
     tuple(map(threading.Thread.start, threads))
     tuple(map(threading.Thread.join,  threads))
     
-    self.assertEqual([True, False, False, False], log)
+    self.assertEqual([True, False, False, False], sorted(log, reverse = True))
 
 
 class TestAbstractPerformance(test.unittest.TestCase):

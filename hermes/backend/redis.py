@@ -15,7 +15,11 @@ __all__ = 'Lock', 'Backend'
 
 
 class Lock(AbstractLock):
-  '''Key-aware distrubuted lock'''
+  '''Key-aware distributed lock. "Distributed" is in sense of clients, 
+  not Redis instances. Implemented as described `here 
+  <http://redis.io/topics/distlock#correct-implementation-with-a-single-instance>`_,
+  but without setting unique value to the lock entry and later checking it, 
+  because it is expected for a cached function to comlete before lock timeout.'''
   
   client = None
   '''Redis client'''
@@ -39,8 +43,7 @@ class Lock(AbstractLock):
 
   def acquire(self, wait = True):
     while True:
-      if self.client.setnx(self.key, 'locked'):
-        self.client.expire(self.key, self.timeout)
+      if self.client.set(self.key, 'locked', nx = True, ex = self.timeout):
         return True
       elif not wait:
         return False
