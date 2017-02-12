@@ -120,7 +120,7 @@ class FakeBackendServer:
 
     serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     serverSocket.bind(('', 0))
-    serverSocket.listen()
+    serverSocket.listen(1)
 
     self.port = serverSocket.getsockname()[1]
 
@@ -152,6 +152,7 @@ class FakeBackendServer:
           self.log.append('received {}'.format(chunk))
     finally:
       clientSocket.close()
+      serverSocket.close()
 
 
 class TestReadme(unittest.TestCase):
