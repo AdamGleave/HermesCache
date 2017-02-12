@@ -8,8 +8,8 @@ import time
 import pickle
 import telnetlib
 
-import hermes.test as test
-import hermes.backend.memcached
+from .. import test, Hermes, Mangler
+from ..backend import memcached, AbstractLock
 
 
 def getAllKeys():
@@ -45,7 +45,7 @@ def getAllKeys():
 class TestMemcached(test.TestCase):
 
   def setUp(self):
-    self.testee = hermes.Hermes(hermes.backend.memcached.Backend, ttl = 360)
+    self.testee = Hermes(memcached.Backend, ttl = 360)
     self.fixture = test.createFixture(self.testee)
 
     self.testee.backend.remove(getAllKeys())
@@ -143,7 +143,8 @@ class TestMemcached(test.TestCase):
       self.assertEqual('ae%hl', self.fixture.tagged2('alpha', 'beta'))
       self.assertEqual(5, self.fixture.calls)
 
-      self.assertEqual(7,  self.getSize(), 'has new and old entries for tagged and tagged 2 + 3 tags')
+      self.assertEqual(7,  self.getSize(),
+        'has new and old entries for tagged and tagged 2 + 3 tags')
       self.assertEqual(treeTag, pickle.loads(self.testee.backend.client.get('cache:tag:tree')))
       self.assertEqual(iceTag, pickle.loads(self.testee.backend.client.get('cache:tag:ice')))
       self.assertEqual(16, len(pickle.loads(self.testee.backend.client.get('cache:tag:rock'))))
@@ -258,7 +259,8 @@ class TestMemcached(test.TestCase):
 
       tagHash = self.testee.mangler.hashTags(dict(a = aTag, z = zTag))
       key = "mk:{'alpha':1}:['beta']:" + tagHash
-      self.assertEqual({'a': 1, 'b': {'b': 'beta'}}, pickle.loads(self.testee.backend.client.get(key)))
+      self.assertEqual({'a': 1, 'b': {'b': 'beta'}},
+        pickle.loads(self.testee.backend.client.get(key)))
 
     self.fixture.all.invalidate({'alpha' : 1}, ['beta'])
 
@@ -403,7 +405,7 @@ class TestMemcached(test.TestCase):
       time.sleep(0.04)
       return '{0}-{1}'.format(a, b)[::2]
 
-    threads = tuple(map(lambda i: threading.Thread(target = bar, args = ('alpha', 'beta')), range(4)))
+    threads = [threading.Thread(target = bar, args = ('alpha', 'beta')) for _ in range(4)]
     tuple(map(threading.Thread.start, threads))
     tuple(map(threading.Thread.join,  threads))
 
@@ -423,9 +425,9 @@ class TestMemcached(test.TestCase):
 
     del log[:]
     self.testee.clean()
-    self.testee.backend.lock = lambda k: hermes.backend.AbstractLock(k) # now see a dogpile
+    self.testee.backend.lock = lambda k: AbstractLock(k) # now see a dogpile
 
-    threads = tuple(map(lambda i: threading.Thread(target = bar, args = ('alpha', 'beta')), range(4)))
+    threads = [threading.Thread(target = bar, args = ('alpha', 'beta')) for _ in range(4)]
     tuple(map(threading.Thread.start, threads))
     tuple(map(threading.Thread.join,  threads))
 
@@ -446,12 +448,13 @@ class TestMemcached(test.TestCase):
 class TestMemcachedLock(test.TestCase):
 
   def setUp(self):
-    cache = hermes.Hermes(hermes.backend.memcached.Backend)
+    cache = Hermes(memcached.Backend)
     cache.clean()
 
-    # make lock instance be created with client from ``hermes.Hermes`` instance at
-    # thread context to utilize ``hermes.backend.memcached.Backend`` ``thread.local``
-    self.__class__.testee = property(lambda self: hermes.backend.memcached.Lock('123', cache.backend.client))
+    # make lock instance be created with client from ``Hermes`` instance at
+    # thread context to utilize ``memcached.Backend`` ``thread.local``
+    self.__class__.testee = property(
+      lambda self: memcached.Lock('123', cache.backend.client))
 
   def testAcquire(self):
     for _ in range(2):
@@ -476,8 +479,8 @@ class TestMemcachedLock(test.TestCase):
       self.assertFalse(self.testee.acquire(False))
       self.assertEqual('123', self.testee.key)
 
-      client  = hermes.backend.memcached.Backend(hermes.Mangler()).client
-      another = hermes.backend.memcached.Lock('234', client)
+      client  = memcached.Backend(Mangler()).client
+      another = memcached.Lock('234', client)
       with another:
         self.assertFalse(another.acquire(False))
         self.assertFalse(self.testee.acquire(False))
@@ -503,7 +506,7 @@ class TestMemcachedLock(test.TestCase):
 class TestMemcachedPerformance(test.unittest.TestCase):
 
   def setUp(self):
-    self.testee  = hermes.Hermes(hermes.backend.memcached.Backend, ttl = 360)
+    self.testee  = Hermes(memcached.Backend, ttl = 360)
     self.fixture = test.createFixture(self.testee)
 
   def tearDown(self):
@@ -511,4 +514,13 @@ class TestMemcachedPerformance(test.unittest.TestCase):
 
   def testPerformance(self):
     test.benchmark(self.fixture)
+
+  def testLazyInit(self):
+    server = test.FakeBackendServer()
+    server.serve()
+
+    Hermes(memcached.Backend, servers = ['localhost:{}'.format(server.port)])
+
+    server.close()
+    self.assertEqual([], server.log)
 
