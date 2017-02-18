@@ -3,4 +3,8 @@ pipelines:
   default:
     - step:
         script:
+          - apt-get update
+          - apt-get install redis-server memcached
+          - service redis-server start
+          - service memcached start
           - tox
