@@ -4,7 +4,7 @@ pipelines:
     - step:
         script:
           - apt-get update
-          - apt-get install --yes --no-install-recommends redis-server memcached \
+          - apt-get install --yes --no-install-recommends redis-server memcached
             libmemcached-dev mercurial
           - service redis-server start
           - service memcached start
