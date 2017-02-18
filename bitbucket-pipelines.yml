@@ -1,4 +1,4 @@
-image: snake-tank
+image: saaj/snake-tank
 pipelines:
   default:
     - step:
