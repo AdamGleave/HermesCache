@@ -1,4 +1,4 @@
-.. image:: https://bitbucket-badges.atlassian.io/badge/saaj/hermes.svg
+.. image:: https://bitbucket-badges.atlassian.io/badge/saaj/hermes.svg?ref=default
   :target: https://bitbucket.org/saaj/hermes/addon/pipelines/home
 .. image:: https://codecov.io/bitbucket/saaj/hermes/branch/default/graph/badge.svg
   :target: https://codecov.io/bitbucket/saaj/hermes/branch/default
@@ -9,7 +9,7 @@
 HermesCache
 ***********
 
-Hermes is a Python caching library. The requirements it was designed to fulfill:
+Hermes is a Python caching library. The requirements it was designed to fulfil:
 
 * Tag-based cache invalidation
 * Dogpile effect prevention
