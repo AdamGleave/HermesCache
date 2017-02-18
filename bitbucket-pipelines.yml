@@ -4,7 +4,7 @@ pipelines:
     - step:
         script:
           - apt-get update
-          - apt-get install redis-server memcached
+          - apt-get install redis-server memcached libmemcached-dev
           - service redis-server start
           - service memcached start
           - tox
