@@ -286,7 +286,7 @@ class Hermes(object):
     if args:
       # @cache
       fn = args[0]
-      if any([inspect.isfunction(fn), inspect.ismethod(fn), inspect.ismethoddescriptor(fn)]):
+      if inspect.isfunction(fn) or inspect.ismethod(fn) or inspect.ismethoddescriptor(fn):
         return self.cachedClass(self.backend, self.mangler, self.ttl, args[0])
       else:
         raise TypeError('First positional argument must be callable or method descriptor')
