@@ -1,11 +1,6 @@
-'''
-@author: saaj
-'''
-
-
-import threading
 import time
 import pickle
+import threading
 import telnetlib
 
 from .. import test, Hermes, Mangler

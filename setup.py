@@ -1,9 +1,3 @@
-# -*- coding: utf-8 -*-
-'''
-@author: saaj
-'''
-
-
 try:
   from setuptools import setup
 except ImportError:
@@ -12,7 +6,7 @@ except ImportError:
 
 setup(
   name         = 'HermesCache',
-  version      = '0.6.2',
+  version      = '0.7.0',
   author       = 'saaj',
   author_email = 'mail@saaj.me',
   packages     = ['hermes', 'hermes.backend', 'hermes.test'],
