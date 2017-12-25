@@ -1,11 +1,6 @@
-'''
-@author: saaj
-'''
-
-
-import threading
 import time
 import pickle
+import threading
 
 from .. import test, Hermes, Mangler
 from ..backend import redis, AbstractLock

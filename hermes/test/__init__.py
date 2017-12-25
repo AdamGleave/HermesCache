@@ -1,23 +1,14 @@
-'''
-@author: saaj
-'''
-
-
-import sys
-import unittest
-import types
 import hashlib
 import random
-import datetime
 import socket
+import unittest
+import datetime
 import threading
 
 try:
   import cPickle as pickle
 except ImportError:
   import pickle
-
-import hermes.backend
 
 
 class TestCase(unittest.TestCase):
@@ -31,12 +22,13 @@ class TestCase(unittest.TestCase):
     harder to make assertion on keys, because pickled results are different on py2 and py3'''
 
     arguments = args, tuple(sorted(kwargs.items()))
-    return hashlib.md5(pickle.dumps(arguments, protocol = pickle.HIGHEST_PROTOCOL)).hexdigest()[::2]
+    return hashlib.md5(
+      pickle.dumps(arguments, protocol = pickle.HIGHEST_PROTOCOL)).hexdigest()[::2]
 
 
 def createFixture(cache):
 
-  class Fixture:
+  class Fixture(object):
 
     calls = 0
 
@@ -63,15 +55,27 @@ def createFixture(cache):
       self.calls += 1
       return '{0}%{1}'.format(a, b)[::-2]
 
-    @cache(tags = ('ash', 'stone'), key = lambda fn, *args, **kwargs: 'mykey:{0}:{1}'.format(*args))
+    @cache(
+      tags = ('ash', 'stone'), key = lambda fn, *args, **kwargs: 'mykey:{0}:{1}'.format(*args))
     def key(self, a, b):
       self.calls += 1
       return '{0}*{1}'.format(a, b)[::2]
 
-    @cache(tags = ('a', 'z'), key = lambda fn, *a: 'mk:{0}:{1}'.format(*a).replace(' ', ''), ttl = 1200)
+    @cache(
+      tags = ('a', 'z'), key = lambda fn, *a: 'mk:{0}:{1}'.format(*a).replace(' ', ''), ttl = 1200)
     def all(self, a, b):
       self.calls += 1
       return {'a' : a['alpha'], 'b' : {'b' : b[0]}}
+
+    @cache
+    @classmethod
+    def classmethod(cls):
+      return cls.__name__
+
+    @cache(tags = ('a', 'z'))
+    @staticmethod
+    def staticmethod():
+      return 'static'
 
   return Fixture()
 
@@ -255,57 +259,4 @@ class TestReadme(unittest.TestCase):
     #    'cache:entry:foo:a1c97600eac6febb:8e7e24cf70c1f0ab': 4,
     #    'cache:entry:foo:a1c97600eac6febb:5cae80f5e7d58329': 4
     #  }
-
-
-class TestWrapping(unittest.TestCase):
-
-  testee = None
-
-
-  def setUp(self):
-    self.testee = hermes.Hermes()
-
-  def testFunction(self):
-
-    @self.testee
-    def foo(a, b):
-      '''Overwhelmed everyone would be...'''
-
-      return a * b
-
-    self.assertTrue(isinstance(foo, hermes.Cached))
-    self.assertEqual('foo', foo.__name__)
-    self.assertEqual('Overwhelmed everyone would be...', foo.__doc__)
-
-  def testMethod(self):
-    fixture = createFixture(self.testee)
-
-    self.assertTrue(isinstance(fixture.simple, hermes.Cached))
-    self.assertEqual('simple', fixture.simple.__name__)
-    self.assertEqual('Here be dragons... seriously just a docstring test', fixture.simple.__doc__)
-
-  def testInstanceIsolation(self):
-
-    class Fixture(object):
-
-      def __init__(self, marker):
-        self.marker = marker
-
-      @self.testee
-      def foo(self):
-        return self.marker
-
-      def bar(self):
-        pass
-
-    f1 = Fixture(12)
-    f2 = Fixture(24)
-
-    # verify instances are not shared
-    self.assertIsNot(f1.foo, f2.foo)
-    # like it is normally the case of normal methods
-    self.assertIsNot(f1.bar, f2.bar)
-
-    self.assertEqual(12, f1.foo())
-    self.assertEqual(24, f2.foo())
 
