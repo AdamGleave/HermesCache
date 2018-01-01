@@ -58,7 +58,7 @@ class TestMemcached(test.TestCase):
     self.assertEqual(0, self.fixture.calls)
     self.assertEqual(0, self.getSize())
 
-    key = 'cache:entry:Fixture:simple:' + self._arghash('alpha', b = 'beta')
+    key = 'cache:entry:hermes.test:Fixture:simple:' + self._arghash('alpha', b = 'beta')
     for _ in range(4):
       self.assertEqual('ateb+ahpla', self.fixture.simple('alpha', b = 'beta'))
       self.assertEqual(1, self.fixture.calls)
@@ -72,7 +72,8 @@ class TestMemcached(test.TestCase):
 
     expectedPy2 = "])]'ammag'[(tes[+}]'ateb'[ :'ahpla'{"
     expectedPy3 = "]}'ammag'{[+}]'ateb'[ :'ahpla'{"
-    key      = 'cache:entry:Fixture:simple:' + self._arghash({'alpha' : ['beta']}, [{'gamma'}])
+    key = 'cache:entry:hermes.test:Fixture:simple:' + \
+      self._arghash({'alpha' : ['beta']}, [{'gamma'}])
     for _ in range(4):
       try:
         self.assertEqual(expectedPy2, self.fixture.simple({'alpha' : ['beta']}, [{'gamma'}]))
@@ -104,7 +105,7 @@ class TestMemcached(test.TestCase):
 
       argHash = self._arghash('alpha', b = 'beta')
       tagHash = self.testee.mangler.hashTags(dict(tree = treeTag, rock = rockTag))
-      key     = 'cache:entry:Fixture:tagged:{0}:{1}'.format(argHash, tagHash)
+      key     = 'cache:entry:hermes.test:Fixture:tagged:{0}:{1}'.format(argHash, tagHash)
       self.assertEqual('ae-hl', pickle.loads(self.testee.backend.client.get(key)))
 
     self.fixture.tagged.invalidate('alpha', b = 'beta')
@@ -163,7 +164,7 @@ class TestMemcached(test.TestCase):
     self.assertEqual(0, counter['foo'])
     self.assertEqual(0, self.getSize())
 
-    key = 'cache:entry:foo:' + self._arghash('alpha', 'beta')
+    key = 'cache:entry:hermes.test.memcached:foo:' + self._arghash('alpha', 'beta')
     for _ in range(4):
       self.assertEqual('ateb+ahpla', foo('alpha', 'beta'))
 
@@ -292,7 +293,7 @@ class TestMemcached(test.TestCase):
     self.assertEqual(2,            self.fixture.calls)
     self.assertEqual(4,            self.getSize())
 
-    simpleKey = 'cache:entry:Fixture:simple:' + self._arghash('alpha', 'beta')
+    simpleKey = 'cache:entry:hermes.test:Fixture:simple:' + self._arghash('alpha', 'beta')
     self.assertEqual('ateb+ahpla', pickle.loads(self.testee.backend.client.get(simpleKey)))
 
     rockTag = pickle.loads(self.testee.backend.client.get('cache:tag:rock'))
@@ -303,7 +304,7 @@ class TestMemcached(test.TestCase):
 
     argHash   = self._arghash('gamma', 'delta')
     tagHash   = self.testee.mangler.hashTags(dict(tree = treeTag, rock = rockTag))
-    taggedKey = 'cache:entry:Fixture:tagged:{0}:{1}'.format(argHash, tagHash)
+    taggedKey = 'cache:entry:hermes.test:Fixture:tagged:{0}:{1}'.format(argHash, tagHash)
     self.assertEqual('aldamg', pickle.loads(self.testee.backend.client.get(taggedKey)))
 
 
@@ -337,7 +338,7 @@ class TestMemcached(test.TestCase):
 
     argHash   = self._arghash('gamma', 'delta')
     tagHash   = self.testee.mangler.hashTags(dict(tree = treeTag, rock = rockTag))
-    taggedKey = 'cache:entry:Fixture:tagged:{0}:{1}'.format(argHash, tagHash)
+    taggedKey = 'cache:entry:hermes.test:Fixture:tagged:{0}:{1}'.format(argHash, tagHash)
     self.assertEqual('aldamg', pickle.loads(self.testee.backend.client.get(taggedKey)))
 
 
@@ -371,7 +372,7 @@ class TestMemcached(test.TestCase):
 
     argHash   = self._arghash('gamma', 'delta')
     tagHash   = self.testee.mangler.hashTags(dict(tree = treeTag, rock = rockTag))
-    taggedKey = 'cache:entry:Fixture:tagged:{0}:{1}'.format(argHash, tagHash)
+    taggedKey = 'cache:entry:hermes.test:Fixture:tagged:{0}:{1}'.format(argHash, tagHash)
     self.assertEqual('aldamg', pickle.loads(self.testee.backend.client.get(taggedKey)))
 
 
@@ -386,9 +387,9 @@ class TestMemcached(test.TestCase):
   def testNested(self):
     self.assertEqual('beta+alpha', self.fixture.nested('alpha', 'beta'))
     self.assertEqual(2, self.fixture.calls)
-    key = 'cache:entry:Fixture:nested:' + self._arghash('alpha', 'beta')
+    key = 'cache:entry:hermes.test:Fixture:nested:' + self._arghash('alpha', 'beta')
     self.assertEqual('beta+alpha', pickle.loads(self.testee.backend.client.get(key)))
-    key = 'cache:entry:Fixture:simple:' + self._arghash('beta', 'alpha')
+    key = 'cache:entry:hermes.test:Fixture:simple:' + self._arghash('beta', 'alpha')
     self.assertEqual('ahpla+ateb', pickle.loads(self.testee.backend.client.get(key)))
 
   def testConcurrent(self):

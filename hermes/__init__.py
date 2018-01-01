@@ -1,4 +1,5 @@
 import os
+import sys
 import types
 import hashlib
 import inspect
@@ -33,13 +34,55 @@ class Mangler(object):
     return pickle.loads(value)
 
   def nameEntry(self, fn, *args, **kwargs):
+    '''Return cache key for given callable and its positional and keyword arguments.
+
+    Note how callable, ``fn``, is represented in the cache key:
+
+      1) a ``types.MethodType`` instance -> names of ``(module, class, method)``
+      2) a ``types.FunctionType`` instance -> names of ``(module, function)``
+      3) other callalbe objects with ``__name__`` -> name of ``(module, object)``
+
+    This means that if two function are defined dynamically in the same module with same
+    names, like::
+
+      def createF1():
+          @cache
+          def f(a, b):
+              return a + b
+          return f
+
+      def createF2():
+          @cache
+          def f(a, b):
+              return a * b
+          return f
+
+      print(createF1()(1, 2))
+      print(createF2()(1, 2))
+
+    Both will return `3`, because cache keys will clash. In such cases you need to pass
+    ``key`` with custom key function.
+
+    It can also be that an object in case 3 doesn't have name, or its name isn't unique,
+    then a ``nameEntry`` should be overridden with something that represents it uniquely,
+    like ``repr(fn).rsplit(' at 0x', 1)[0]`` (address should be stripped so after Python
+    process restart the cache can still be valid and usable).
+    '''
+
     result = [self.prefix, 'entry']
-    if isinstance(fn, types.MethodType):
-      result.extend([fn.__self__.__class__.__name__, fn.__name__])
-    elif isinstance(fn, types.FunctionType):
-      result.append(fn.__name__)
+    if callable(fn):
+      try:
+        # types.MethodType
+        result.extend([fn.__module__, fn.__self__.__class__.__name__, fn.__name__])
+      except AttributeError:
+        try:
+          # types.FunctionType and other object with __name__
+          result.extend([fn.__module__, fn.__name__])
+        except AttributeError:
+          raise TypeError(
+            'Fn is callable but its name is undefined, consider overriding Mangler.nameEntry')
     else:
-      raise TypeError('Fn is expected to be instance of MethodType or FunctionType')
+      raise TypeError('Fn is expected to be callable')
 
     arguments = args, tuple(sorted(kwargs.items()))
     result.append(self.hash(self.dumps(arguments)))
@@ -77,8 +120,13 @@ class Cached(object):
   '''The decorated callable, stays ``types.FunctionType`` if a function is decorated,
   otherwise it is transformed to ``types.MethodType`` on the instance clone by descriptor
   protocol implementation. It can also be a method descriptor which is also transformed
-  accordingly to the descriptor protocol (e.g. ``staticmethod`` and ``classmethod``).
-  '''
+  accordingly to the descriptor protocol (e.g. ``staticmethod`` and ``classmethod``).'''
+
+  _isDescriptor = None
+  '''Flag defining if the callable is a method descriptor'''
+
+  _isMethod = None
+  '''Flag defining if the callable is a method'''
 
   _ttl = None
   '''Cache entry Time To Live for decorated callable'''
@@ -93,10 +141,14 @@ class Cached(object):
   def __init__(self, backend, mangler, ttl, callable, **kwargs):
     self._backend  = backend
     self._mangler  = mangler
-    self._callable = callable
     self._ttl      = ttl
     self._keyFunc  = kwargs.get('key', self._mangler.nameEntry)
     self._tags     = kwargs.get('tags', None)
+
+    self._callable = callable
+    self._isDescriptor = inspect.ismethoddescriptor(callable)
+    self._isMethod = inspect.ismethod(callable)
+
     # preserve ``__name__``, ``__doc__``, etc
     try:
       functools.update_wrapper(self, callable)
@@ -154,12 +206,6 @@ class Cached(object):
           self._save(key, value)
     return value
 
-  def _copy(self, callable):
-      bound           = object.__new__(self.__class__)
-      bound.__dict__  = self.__dict__.copy()
-      bound._callable = callable
-      return bound
-
   def __get__(self, instance, type):
     '''Implements non-data descriptor protocol.
 
@@ -192,12 +238,25 @@ class Cached(object):
     For more details, http://docs.python.org/2/howto/descriptor.html#descriptor-protocol.
     '''
 
-    if inspect.ismethoddescriptor(self._callable):
+    if self._isDescriptor:
       return self._copy(self._callable.__get__(instance, type))
-    elif not inspect.ismethod(self._callable):
-      return self._copy(types.MethodType(self._callable, instance))
+    elif not self._isMethod:
+      return self._copy(self._create_method(self._callable, instance, type))
+    else:
+      return self
 
-    return self
+  def _copy(self, callable):
+      bound           = object.__new__(self.__class__)
+      bound.__dict__  = self.__dict__.copy()
+      bound._callable = callable
+      return bound
+
+  if sys.version_info >= (3, 0):
+    def _create_method(self, callable, instance, type):
+      return types.MethodType(callable, instance)
+  else:
+    def _create_method(self, callable, instance, type):
+      return types.MethodType(callable, instance, type)
 
 
 class Hermes(object):
@@ -285,8 +344,7 @@ class Hermes(object):
 
     if args:
       # @cache
-      fn = args[0]
-      if inspect.isfunction(fn) or inspect.ismethod(fn) or inspect.ismethoddescriptor(fn):
+      if callable(args[0]) or inspect.ismethoddescriptor(args[0]):
         return self.cachedClass(self.backend, self.mangler, self.ttl, args[0])
       else:
         raise TypeError('First positional argument must be callable or method descriptor')

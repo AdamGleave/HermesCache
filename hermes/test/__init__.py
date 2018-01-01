@@ -14,6 +14,9 @@ except ImportError:
 class TestCase(unittest.TestCase):
 
   testee = None
+  '''HermesCache object'''
+
+  fixture = None
   '''Object under test'''
 
 
@@ -67,16 +70,6 @@ def createFixture(cache):
       self.calls += 1
       return {'a' : a['alpha'], 'b' : {'b' : b[0]}}
 
-    @cache
-    @classmethod
-    def classmethod(cls):
-      return cls.__name__
-
-    @cache(tags = ('a', 'z'))
-    @staticmethod
-    def staticmethod():
-      return 'static'
-
   return Fixture()
 
 
@@ -91,7 +84,8 @@ def benchmark(fixture):
   args   = [(random.randint(0, 4096), random.randint(0, 4096)) for _ in xrange(1024)]
   repeat = 8192
   for method in ('simple', 'tagged'):
-    print('\n{0} {1} {0}'.format('-' * 20, method))
+    print(
+      '\n{0} {1} {2} '.format('-' * 10, fixture.simple._backend.__module__, method).ljust(50, '-'))
     start = datetime.datetime.now()
     for _ in xrange(repeat):
       getattr(fixture, method)(*random.choice(args))

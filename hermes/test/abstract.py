@@ -2,7 +2,7 @@ import threading
 import time
 
 from .. import test
-import hermes.backend
+import hermes.backend.dict
 
 
 class TestAbstract(test.TestCase):
@@ -179,7 +179,8 @@ class TestAbstractPerformance(test.unittest.TestCase):
 class TestWrapping(test.TestCase):
 
   def setUp(self):
-    self.testee = hermes.Hermes()
+    self.testee = hermes.Hermes(hermes.backend.dict.Backend)
+    self.fixture = test.createFixture(self.testee)
 
   def testFunction(self):
 
@@ -194,20 +195,20 @@ class TestWrapping(test.TestCase):
     self.assertEqual('Overwhelmed everyone would be...', foo.__doc__)
 
   def testMethod(self):
-    fixture = test.createFixture(self.testee)
-
-    self.assertTrue(isinstance(fixture.simple, hermes.Cached))
-    self.assertEqual('simple', fixture.simple.__name__)
-    self.assertEqual('Here be dragons... seriously just a docstring test', fixture.simple.__doc__)
+    self.assertTrue(isinstance(self.fixture.simple, hermes.Cached))
+    self.assertEqual('simple', self.fixture.simple.__name__)
+    self.assertEqual(
+      'Here be dragons... seriously just a docstring test', self.fixture.simple.__doc__)
 
   def testInstanceIsolation(self):
+    testee = hermes.Hermes()
 
     class Fixture(object):
 
       def __init__(self, marker):
         self.marker = marker
 
-      @self.testee
+      @testee
       def foo(self):
         return self.marker
 
@@ -226,8 +227,87 @@ class TestWrapping(test.TestCase):
     self.assertEqual(24, f2.foo())
 
   def testMethodDescriptor(self):
-    fixture = test.createFixture(self.testee)
 
-    self.assertEqual('Fixture', fixture.classmethod())
-    self.assertEqual('static', fixture.staticmethod())
+    class Fixture(object):
+
+      @self.testee
+      @classmethod
+      def classmethod(cls):
+        return cls.__name__
+
+      @self.testee
+      @staticmethod
+      def staticmethod():
+        return 'static'
+
+    self.assertEqual('Fixture', Fixture().classmethod())
+    self.assertEqual('static', Fixture().staticmethod())
+
+  def testDoubleCache(self):
+
+    class Fixture(object):
+
+      @self.testee
+      @self.testee
+      def doublecache(self):
+        return 'descriptor vs callable'
+
+    self.assertEqual('descriptor vs callable', Fixture().doublecache())
+
+  def testNumbaCpuDispatcher(self):
+    # In case of application of ``jit`` to a method, ``CpuDispatcher`` is
+    # a descriptor which returns normal MethodType. In case of function,
+    # ``CpuDispatcher`` is a callable and has ``__name__`` of the wrapped function.
+
+    class CpuDispatcher(object):
+
+      def __init__(self, fn):
+        self.fn = fn
+
+      @property
+      def __name__(self):
+        return self.fn.__name__
+
+      def __call__(self, *args, **kwargs):
+        return self.fn(*args, **kwargs)
+
+    def jit(fn):
+      return CpuDispatcher(fn)
+
+    @self.testee
+    @jit
+    def sum(x, y):
+      return x + y
+
+    @self.testee
+    @jit
+    def product(x, y):
+      return x * y
+
+    self.assertEqual(36, sum(26, 10))
+    self.assertEqual(260, product(26, 10))
+
+  def testNamelessObjectWrapperFailure(self):
+
+    class CpuDispatcher(object):
+
+      def __init__(self, fn):
+        self.fn = fn
+
+      def __call__(self, *args, **kwargs):
+        return self.fn(*args, **kwargs)
+
+    def objwrap(fn):
+      return CpuDispatcher(fn)
+
+    @self.testee
+    @objwrap
+    def f(x, y):
+      return x + y
+
+    with self.assertRaises(TypeError) as ctx:
+      f(26, 10)
+    self.assertEqual(
+      'Fn is callable but its name is undefined, consider overriding Mangler.nameEntry',
+      str(ctx.exception))
 
