@@ -1,6 +1,3 @@
-import threading
-import time
-
 from .. import test
 import hermes.backend.dict
 
@@ -143,24 +140,6 @@ class TestAbstractLock(test.TestCase):
   def testWith(self):
     with self.testee:
       self.assertTrue(self.testee.acquire(False))
-
-  def testConcurrent(self):
-    log   = []
-    check = threading.Lock()
-    def target():
-      with self.testee:
-        locked = check.acquire(False)
-        log.append(locked)
-        time.sleep(0.05)
-        if locked:
-          check.release()
-        time.sleep(0.05)
-
-    threads = tuple(map(lambda i: threading.Thread(target = target), range(4)))
-    tuple(map(threading.Thread.start, threads))
-    tuple(map(threading.Thread.join,  threads))
-
-    self.assertEqual([True, False, False, False], sorted(log, reverse = True))
 
 
 class TestAbstractPerformance(test.unittest.TestCase):

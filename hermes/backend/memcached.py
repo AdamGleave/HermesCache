@@ -1,5 +1,4 @@
 import time
-import threading
 
 try:
   import pylibmc as memcache
@@ -52,7 +51,7 @@ class Lock(AbstractLock):
 class Backend(AbstractBackend):
   '''Memcached backend implementation'''
 
-  _local = None
+  _client = None
   '''Thread-local data'''
 
   _options = None
@@ -62,16 +61,15 @@ class Backend(AbstractBackend):
   def __init__(self, mangler, **kwargs):
     self.mangler  = mangler
     self._options = kwargs
-    self._local   = threading.local()
 
   @property
   def client(self):
     '''Thread-mapped memcached client accessor'''
 
-    if not hasattr(self._local, 'client'):
-      self._local.client = memcache.Client(self._options.get('servers', ['localhost:11211']))
+    if self._client is None:
+      self._client = memcache.Client(self._options.get('servers', ['localhost:11211']))
 
-    return self._local.client
+    return self._client
 
   def lock(self, key):
     return Lock(self.mangler.nameLock(key), self.client, **self._options)

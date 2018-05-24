@@ -53,8 +53,10 @@ class Lock(AbstractLock):
 class Backend(AbstractBackend):
   '''Redis backend implementation'''
 
-  client = None
+  _client = None
   '''Redis client'''
+  _client_opt = None
+  '''Arguments for StrictRedis'''
 
   _options = None
   '''Lock options'''
@@ -63,14 +65,20 @@ class Backend(AbstractBackend):
   def __init__(self, mangler, **kwargs):
     super(Backend, self).__init__(mangler)
 
-    self.client = redis.StrictRedis(**{
+    self._client_opt = {
       'host'     : kwargs.pop('host',     'localhost'),
       'password' : kwargs.pop('password', None),
       'port'     : kwargs.pop('port',     6379),
       'db'       : kwargs.pop('db',       0)
-    })
+    }
 
     self._options = kwargs
+
+  @property
+  def client(self):
+    if self._client is None:
+      self._client = redis.StrictRedis(**self._client_opt)
+    return self._client
 
   def lock(self, key):
     return Lock(self.mangler.nameLock(key), self.client, **self._options)

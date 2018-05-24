@@ -1,6 +1,5 @@
 import json
 import time
-import threading
 
 import hermes.test as test
 import hermes.backend.dict
@@ -324,47 +323,6 @@ class TestDict(test.TestCase):
       'cache:entry:hermes.test:Fixture:simple:' + self._arghash('beta', 'alpha') : 'ahpla+ateb'
     }, self.testee.backend.dump())
 
-  def testConcurrent(self):
-    log = []
-    key = lambda fn, *args, **kwargs: 'mk:{0}:{1}'.format(*args)
-    @self.testee(tags = ('a', 'z'), key = key, ttl = 120)
-    def bar(a, b):
-      log.append(1)
-      time.sleep(0.04)
-      return '{0}-{1}'.format(a, b)[::2]
-
-    threads = tuple(map(
-      lambda i: threading.Thread(target = bar, args = ('alpha', 'beta')), range(4)))
-    tuple(map(threading.Thread.start, threads))
-    tuple(map(threading.Thread.join,  threads))
-
-    self.assertEqual(1, sum(log))
-
-    cache = self.testee.backend.dump()
-    self.assertEqual(16, len(cache.pop('cache:tag:a')))
-    self.assertEqual(16, len(cache.pop('cache:tag:z')))
-
-    self.assertEqual('mk:alpha:beta', ':'.join(tuple(cache.keys())[0].split(':')[:-1]))
-    self.assertEqual('apabt', tuple(cache.values())[0])
-
-    del log[:]
-    self.testee.clean()
-    self.testee.backend.lock = lambda k: hermes.backend.AbstractLock(k) # now see a dogpile
-
-    threads = tuple(map(
-      lambda i: threading.Thread(target = bar, args = ('alpha', 'beta')), range(4)))
-    tuple(map(threading.Thread.start, threads))
-    tuple(map(threading.Thread.join,  threads))
-
-    self.assertGreater(sum(log), 1, 'dogpile')
-
-    cache = self.testee.backend.dump()
-    self.assertEqual(16, len(cache.pop('cache:tag:a')))
-    self.assertEqual(16, len(cache.pop('cache:tag:z')))
-
-    self.assertEqual('mk:alpha:beta', ':'.join(tuple(cache.keys())[0].split(':')[:-1]))
-    self.assertEqual('apabt', tuple(cache.values())[0])
-
 
 class TestDictLock(test.TestCase):
 
@@ -390,22 +348,6 @@ class TestDictLock(test.TestCase):
   def testWith(self):
     with self.testee:
       self.assertTrue(self.testee.acquire(False)) # reintrant within one thread
-
-  def testConcurrent(self):
-    log   = []
-    check = threading.Lock()
-    def target():
-      with self.testee:
-        log.append(check.acquire(False))
-        time.sleep(0.05)
-        check.release()
-        time.sleep(0.05)
-
-    threads = tuple(map(lambda i: threading.Thread(target = target), range(4)))
-    tuple(map(threading.Thread.start, threads))
-    tuple(map(threading.Thread.join,  threads))
-
-    self.assertEqual([True] * 4, log)
 
 
 class CustomMangler(hermes.Mangler):
@@ -740,47 +682,6 @@ class TestDictCustomMangler(TestDict):
       prefix + ':nested:' + str(self._arghash('alpha', 'beta')) : 'beta+alpha',
       prefix + ':simple:' + str(self._arghash('beta', 'alpha')) : 'ahpla+ateb'
     }, self.testee.backend.dump())
-
-  def testConcurrent(self):
-    log = []
-    key = lambda fn, *args, **kwargs: 'mk:{0}:{1}'.format(*args)
-    @self.testee(tags = ('a', 'z'), key = key, ttl = 120)
-    def bar(a, b):
-      log.append(1)
-      time.sleep(0.04)
-      return '{0}-{1}'.format(a, b)[::2]
-
-    threads = tuple(map(
-      lambda i: threading.Thread(target = bar, args = ('alpha', 'beta')), range(4)))
-    tuple(map(threading.Thread.start, threads))
-    tuple(map(threading.Thread.join,  threads))
-
-    self.assertEqual(1, sum(log))
-
-    cache = self.testee.backend.dump()
-    self.assertTrue(int(cache.pop('hermes:tag:a')) != 0)
-    self.assertTrue(int(cache.pop('hermes:tag:z')) != 0)
-
-    self.assertEqual('mk:alpha:beta', ':'.join(tuple(cache.keys())[0].split(':')[:-1]))
-    self.assertEqual('apabt', tuple(cache.values())[0])
-
-    del log[:]
-    self.testee.clean()
-    self.testee.backend.lock = lambda k: hermes.backend.AbstractLock(k) # now see a dogpile
-
-    threads = tuple(map(
-      lambda i: threading.Thread(target = bar, args = ('alpha', 'beta')), range(4)))
-    tuple(map(threading.Thread.start, threads))
-    tuple(map(threading.Thread.join,  threads))
-
-    self.assertGreater(sum(log), 1, 'dogpile')
-
-    cache = self.testee.backend.dump()
-    self.assertTrue(int(cache.pop('hermes:tag:a')) != 0)
-    self.assertTrue(int(cache.pop('hermes:tag:z')) != 0)
-
-    self.assertEqual('mk:alpha:beta', ':'.join(tuple(cache.keys())[0].split(':')[:-1]))
-    self.assertEqual('apabt', tuple(cache.values())[0])
 
 
 class CustomCached(hermes.Cached):

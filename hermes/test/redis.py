@@ -1,6 +1,4 @@
-import time
 import pickle
-import threading
 
 from .. import test, Hermes, Mangler
 from ..backend import redis, AbstractLock
@@ -356,54 +354,6 @@ class TestRedis(test.TestCase):
     key = 'cache:entry:hermes.test:Fixture:simple:' +  self._arghash('beta', 'alpha')
     self.assertEqual('ahpla+ateb', pickle.loads(self.testee.backend.client.get(key)))
 
-  def testConcurrent(self):
-    log = []
-    key = lambda fn, *args, **kwargs: 'mk:{0}:{1}'.format(*args)
-    @self.testee(tags = ('a', 'z'), key = key, ttl = 120)
-    def bar(a, b):
-      log.append(1)
-      time.sleep(0.04)
-      return '{0}-{1}'.format(a, b)[::2]
-
-    threads = [threading.Thread(target = bar, args = ('alpha', 'beta')) for _ in range(4)]
-    tuple(map(threading.Thread.start, threads))
-    tuple(map(threading.Thread.join,  threads))
-
-    self.assertEqual(1, sum(log))
-    self.assertEqual(3, self.testee.backend.client.dbsize())
-
-    aTag = pickle.loads(self.testee.backend.client.get('cache:tag:a'))
-    zTag = pickle.loads(self.testee.backend.client.get('cache:tag:z'))
-    self.assertFalse(aTag == zTag)
-    self.assertEqual(16, len(aTag))
-    self.assertEqual(16, len(zTag))
-
-    tagHash = self.testee.mangler.hashTags(dict(a = aTag, z = zTag))
-    key     = 'mk:alpha:beta:' + tagHash
-    self.assertEqual('apabt', pickle.loads(self.testee.backend.client.get(key)))
-
-    del log[:]
-    self.testee.clean()
-    self.testee.backend.lock = lambda k: AbstractLock(k) # now see a dogpile
-
-    threads = [threading.Thread(target = bar, args = ('alpha', 'beta')) for _ in range(4)]
-    tuple(map(threading.Thread.start, threads))
-    tuple(map(threading.Thread.join,  threads))
-
-    self.assertGreater(sum(log), 1, 'dogpile')
-    # enries may be duplicated if tags overwrite
-    self.assertGreaterEqual(self.testee.backend.client.dbsize(), 3)
-
-    aTag = pickle.loads(self.testee.backend.client.get('cache:tag:a'))
-    zTag = pickle.loads(self.testee.backend.client.get('cache:tag:z'))
-    self.assertFalse(aTag == zTag)
-    self.assertEqual(16, len(aTag))
-    self.assertEqual(16, len(zTag))
-
-    tagHash = self.testee.mangler.hashTags(dict(a = aTag, z = zTag))
-    key     = 'mk:alpha:beta:' + tagHash
-    self.assertEqual('apabt', pickle.loads(self.testee.backend.client.get(key)))
-
 
 class TestRedisLock(test.TestCase):
 
@@ -444,22 +394,6 @@ class TestRedisLock(test.TestCase):
         self.assertFalse(another.acquire(False))
         self.assertFalse(self.testee.acquire(False))
         self.assertEqual('234', another.key)
-
-  def testConcurrent(self):
-    log   = []
-    check = threading.Lock()
-    def target():
-      with self.testee:
-        log.append(check.acquire(False))
-        time.sleep(0.05)
-        check.release()
-        time.sleep(0.05)
-
-    threads = tuple(map(lambda i: threading.Thread(target = target), range(4)))
-    tuple(map(threading.Thread.start, threads))
-    tuple(map(threading.Thread.join,  threads))
-
-    self.assertEqual([True] * 4, log)
 
 
 class TestRedisPerformance(test.TestCase):

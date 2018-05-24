@@ -1,27 +1,9 @@
-import threading
-
 from . import AbstractBackend, AbstractLock
 
 
 __all__ = 'Lock', 'Backend'
 
-
-class Lock(AbstractLock):
-  '''Key-unaware thread lock'''
-
-
-  _lock = None
-  '''Threading lock instance'''
-
-  def __init__(self, key):
-    self._lock = threading.RLock()
-
-  def acquire(self, wait = True):
-    return self._lock.acquire(wait)
-
-  def release(self):
-    self._lock.release()
-
+Lock = AbstractLock
 
 class Backend(AbstractBackend):
   '''Test purpose backend implementation. Does not support entry expiry. ``save`` and ``delete``
@@ -40,7 +22,7 @@ class Backend(AbstractBackend):
     super(Backend, self).__init__(mangler)
 
     self.cache = {}
-    self._lock = Lock(None)
+    self._lock = AbstractLock(None)
 
   def lock(self, key):
     return self._lock
